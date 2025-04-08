@@ -1,0 +1,13 @@
+[package]
+name = "hgtk-rs"
+version = "0.1.0"
+authors = ["Steve Reed <zhufuzhufu1@gmail.com>"]
+edition = "2021"
+
+[lib]
+name = "hgtk"
+crate-type = ["cdylib"]
+path = "src/rustMain/lib.rs"
+
+[dependencies]
+jni = "0.21.1"
