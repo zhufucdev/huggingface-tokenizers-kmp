@@ -11,3 +11,5 @@ path = "src/rustMain/lib.rs"
 
 [dependencies]
 jni = "0.21.1"
+libc = "0.2.171"
+tokenizers = { version = "0.21.1", features = ["http"] }

@@ -1,23 +1,10 @@
-use jni::JNIEnv;
-use jni::objects::JClass;
-pub use plus::*;
-
-pub mod plus {
-    #[no_mangle]
-    pub extern "C" fn plus(a: i32, b: i32) -> i32 {
-        a + b
-    }
-}
-
-#[no_mangle]
-pub extern "system" fn Java_Platform_plus(env: JNIEnv, class: JClass, a: i32, b: i32) -> i32 {
-    println!("Loaded from Rust. a = {a}, b = {b}");
-    plus::plus(a, b)
-}
+mod bridge;
+pub mod capi;
+pub mod japi;
 
 #[cfg(test)]
 mod tests {
-    use crate::plus;
+    use crate::capi::plus;
 
     #[test]
     fn plus_test() {
