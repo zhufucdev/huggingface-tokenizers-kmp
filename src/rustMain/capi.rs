@@ -1,5 +1,6 @@
+use std::alloc;
 use crate::bridge::bridge;
-use std::ffi::{CStr, CString};
+use std::ffi::{c_char, c_uint, c_void, CStr, CString};
 use std::fmt::Debug;
 
 #[no_mangle]
@@ -9,24 +10,24 @@ pub extern "C" fn plus(a: i32, b: i32) -> i32 {
 
 #[no_mangle]
 pub unsafe extern "C" fn new_tokenizer_from_pretrained(
-    identifier: *const libc::c_char,
-) -> Result<*const libc::c_void> {
+    identifier: *const c_char,
+) -> Result<*const c_void> {
     match bridge::new_tokenizer_from_pretrained(
         CStr::from_ptr(identifier)
             .to_str()
             .expect("FFI string conversion failed."),
     ) {
-        Ok(ptr) => Result::ok(ptr as *const libc::c_void),
+        Ok(ptr) => Result::ok(ptr as *const c_void),
         Err(err) => Result::error_to_str_nilptr(err),
     }
 }
 
 #[no_mangle]
 pub extern "C" fn tokenizer_encode(
-    ptr: *const libc::c_void,
-    content: *const libc::c_char,
+    ptr: *const c_void,
+    content: *const c_char,
     add_special_tokens: bool,
-) -> Result<*const libc::c_void> {
+) -> Result<*const c_void> {
     let content = unsafe {
         CStr::from_ptr(content)
             .to_str()
@@ -34,27 +35,27 @@ pub extern "C" fn tokenizer_encode(
     };
     match bridge::tokenizer_encode(ptr as usize, content, add_special_tokens) {
         None => Result::error_nilptr("Nil tokenizer pointer."),
-        Some(Ok(ptr)) => Result::ok(ptr as *const libc::c_void),
+        Some(Ok(ptr)) => Result::ok(ptr as *const c_void),
         Some(Err(err)) => Result::error_to_str_nilptr(err),
     }
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn release_cstring_ptr(ptr: *mut libc::c_char) {
+pub unsafe extern "C" fn release_cstring_ptr(ptr: *mut c_char) {
     _ = CString::from_raw(ptr);
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn encoding_get_tokens(
-    ptr: *const libc::c_void,
-) -> Result<List<*const libc::c_char>> {
+    ptr: *const c_void,
+) -> Result<List<*const c_char>> {
     match bridge::encoding_get_tokens(ptr as usize) {
         None => Result::error_empty("Nil encoding pointer."),
         Some(tokens) => Result::ok(List::from_vec(
             tokens
                 .iter()
                 .map(|token| {
-                    CString::new(token.as_str()).unwrap().into_raw() as *const libc::c_char
+                    CString::new(token.as_str()).unwrap().into_raw() as *const c_char
                 })
                 .collect(),
         )),
@@ -62,7 +63,7 @@ pub unsafe extern "C" fn encoding_get_tokens(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn encoding_get_ids(ptr: *const libc::c_void) -> Result<List<libc::c_uint>> {
+pub unsafe extern "C" fn encoding_get_ids(ptr: *const c_void) -> Result<List<c_uint>> {
     match bridge::encoding_get_ids(ptr as usize) {
         None => Result::error_empty("Nil encoding pointer."),
         Some(ids) => Result::ok(List::from_vec(ids)),
@@ -72,14 +73,14 @@ pub unsafe extern "C" fn encoding_get_ids(ptr: *const libc::c_void) -> Result<Li
 #[repr(C)]
 pub struct Result<T> {
     value: T,
-    error_msg: *const libc::c_char,
+    error_msg: *const c_char,
 }
 
 impl<T> Result<T> {
     pub fn ok(value: T) -> Self {
         Self {
             value,
-            error_msg: 0 as *const libc::c_char,
+            error_msg: 0 as *const c_char,
         }
     }
 
@@ -100,13 +101,13 @@ impl<T> Result<T> {
     }
 }
 
-impl Result<*const libc::c_void> {
+impl Result<*const c_void> {
     pub fn error_nilptr<E: Debug>(error: E) -> Self {
-        Self::error(0 as *const libc::c_void, error)
+        Self::error(0 as *const c_void, error)
     }
 
     pub fn error_to_str_nilptr<E: ToString>(error: E) -> Self {
-        Self::error_to_str(0 as *const libc::c_void, error)
+        Self::error_to_str(0 as *const c_void, error)
     }
 }
 
@@ -123,7 +124,7 @@ impl<T> Result<List<T>> {
 #[repr(C)]
 pub struct List<T> {
     ptr: *const T,
-    len: libc::size_t,
+    len: usize,
 }
 
 impl<T> List<T> {
@@ -137,7 +138,8 @@ impl<T> List<T> {
 
 impl<T: Clone> List<T> {
     pub unsafe fn from_vec(vec: Vec<T>) -> Self {
-        let span = libc::calloc(vec.len(), size_of::<T>()) as *mut T;
+        let layout = alloc::Layout::from_size_align(vec.len(), size_of::<T>()).unwrap();
+        let span = alloc::alloc_zeroed(layout) as *mut T;
         for (idx, ele) in vec.iter().enumerate() {
             let owned = ele.clone();
             span.offset(idx as isize).write(owned)
