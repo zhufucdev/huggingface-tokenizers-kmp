@@ -126,3 +126,18 @@ pub extern "system" fn Java_NativeBridge_encodingGetIds(
         }
     }
 }
+
+#[no_mangle]
+pub extern "system" fn Java_NativeBridge_encodingGetLen(
+    mut env: JNIEnv,
+    _: JClass,
+    ptr: jlong
+) -> jint {
+    match bridge::encoding_get_len(ptr as usize) {
+        None => {
+            env.throw("Null encoding pointer.").unwrap();
+            0
+        }
+        Some(len) => len as jint
+    }
+}

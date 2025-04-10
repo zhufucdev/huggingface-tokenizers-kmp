@@ -17,6 +17,14 @@ actual class Encoding private constructor(ptr: Long) {
         }
     }
 
+    actual val size: Int by lazy {
+        try {
+            NativeBridge.encodingGetLen(ptr).toInt()
+        } catch (e: RuntimeException) {
+            throw NullPointerException(e.message)
+        }
+    }
+
     companion object {
         fun fromPtr(ptr: Long) = Encoding(ptr)
     }

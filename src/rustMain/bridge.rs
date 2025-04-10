@@ -39,4 +39,9 @@ pub mod bridge {
         let en = unsafe { (ptr as *mut Encoding).as_ref() }?;
         Some(Vec::from(en.get_ids()))
     }
+    
+    pub fn encoding_get_len(ptr: usize) -> Option<usize> {
+        let en = unsafe { (ptr as *mut Encoding).as_ref() }?;
+        Some(en.len())
+    }
 }

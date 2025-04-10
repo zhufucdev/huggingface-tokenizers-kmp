@@ -4,15 +4,21 @@ pub mod japi;
 
 #[cfg(test)]
 mod tests {
-    use crate::capi::plus;
+    use tokenizers::Tokenizer;
 
     #[test]
-    fn plus_test() {
-        assert_eq!(0, plus(0, 0));
-        assert_eq!(0, plus(-1, 1));
-        assert_eq!(0, plus(1, -1));
-        assert_eq!(4, plus(2, 2));
-        assert_eq!(5, plus(3, 2));
-        assert_eq!(5, plus(2, 3));
+    fn encoding_test() {
+        let tk = Tokenizer::from_pretrained("bert-base-cased", None).unwrap();
+        let encoding = tk.encode("Hey there!", true).unwrap();
+        println!("len = {}", encoding.len());
+        println!(
+            "ids = {}",
+            encoding
+                .get_ids()
+                .iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<String>>()
+                .join(", ")
+        )
     }
 }

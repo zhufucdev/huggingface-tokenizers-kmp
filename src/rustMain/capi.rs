@@ -1,6 +1,6 @@
-use std::alloc;
 use crate::bridge::bridge;
-use std::ffi::{c_char, c_uint, c_void, CStr, CString};
+use std::alloc;
+use std::ffi::{c_char, c_int, c_uint, c_void, CStr, CString};
 use std::fmt::Debug;
 
 #[no_mangle]
@@ -23,14 +23,14 @@ pub unsafe extern "C" fn new_tokenizer_from_pretrained(
 }
 
 #[no_mangle]
-pub unsafe  extern "C" fn new_tokenizer_from_file(filename: *const c_char) -> Result<*const c_void> {
+pub unsafe extern "C" fn new_tokenizer_from_file(filename: *const c_char) -> Result<*const c_void> {
     match bridge::new_tokenizer_from_file(
         CStr::from_ptr(filename)
             .to_str()
-            .expect("FFI string conversion failed.")
+            .expect("FFI string conversion failed."),
     ) {
         Ok(ptr) => Result::ok(ptr as *const c_void),
-        Err(err) => Result::error_to_str_nilptr(err)
+        Err(err) => Result::error_to_str_nilptr(err),
     }
 }
 
@@ -58,17 +58,13 @@ pub unsafe extern "C" fn release_cstring_ptr(ptr: *mut c_char) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn encoding_get_tokens(
-    ptr: *const c_void,
-) -> Result<List<*const c_char>> {
+pub unsafe extern "C" fn encoding_get_tokens(ptr: *const c_void) -> Result<List<*const c_char>> {
     match bridge::encoding_get_tokens(ptr as usize) {
         None => Result::error_empty("Nil encoding pointer."),
         Some(tokens) => Result::ok(List::from_vec(
             tokens
                 .iter()
-                .map(|token| {
-                    CString::new(token.as_str()).unwrap().into_raw() as *const c_char
-                })
+                .map(|token| CString::new(token.as_str()).unwrap().into_raw() as *const c_char)
                 .collect(),
         )),
     }
@@ -79,6 +75,14 @@ pub unsafe extern "C" fn encoding_get_ids(ptr: *const c_void) -> Result<List<c_u
     match bridge::encoding_get_ids(ptr as usize) {
         None => Result::error_empty("Nil encoding pointer."),
         Some(ids) => Result::ok(List::from_vec(ids)),
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn encoding_get_len(ptr: *const c_void) -> Result<usize> {
+    match bridge::encoding_get_len(ptr as usize) {
+        None => Result::error(0, "Nil encoding pointer."),
+        Some(len) => Result::ok(len)
     }
 }
 
