@@ -1,13 +1,6 @@
 import org.gradle.api.DefaultTask
-import org.gradle.api.file.Directory
-import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.io.File
 
@@ -22,6 +15,10 @@ abstract class CargoCompile : DefaultTask() {
     @get:Optional
     @get:Input
     protected abstract val libNameProperty: Property<String>
+
+    @get:Optional
+    @get:Input
+    protected abstract val crossProperty: Property<Boolean>
 
     @get:Optional
     @get:InputFiles
@@ -71,6 +68,18 @@ abstract class CargoCompile : DefaultTask() {
         sourceDirProperty.set(value)
     }
 
+    /**
+     * Use the [cross](https://github.com/cross-rs/cross) utility
+     * instead of cargo for convenient cross-compilation.
+     * A Docker daemon is required to use this feature.
+     */
+    @get:Internal
+    var cross: Boolean
+        get() = crossProperty.get()
+        set(value) {
+            crossProperty.set(value)
+        }
+
     private val platformTuple get() = rustupTarget[konanTarget] ?: error("Unsupported platform: ${konanTarget.name}.")
 
     /**
@@ -100,26 +109,39 @@ abstract class CargoCompile : DefaultTask() {
      * Example: `$projectRoot/build/target/aarch-apple-darwin/release/libcoolname.dylib`
      */
     @OutputFile
-    val binaryFile = libPath.zip(konanTargetProperty.zip(libNameProperty) { k, l -> k to l }) { product, (konan, libName) ->
-        File(
-            product,
-            "${konan.family.dynamicPrefix}${libName}.${konan.family.dynamicSuffix}"
-        )
-    }
+    val binaryFile =
+        libPath.zip(konanTargetProperty.zip(libNameProperty) { k, l -> k to l }) { product, (konan, libName) ->
+            File(
+                product,
+                "${konan.family.dynamicPrefix}${libName}.${konan.family.dynamicSuffix}"
+            )
+        }
 
     init {
         dirNameProperty.set("target")
         sourceDirProperty.set(project.file("src/rustMain"))
+        crossProperty.set(false)
     }
 
     @TaskAction
     protected fun compile() {
-        project.cargoRun(
-            "build",
-            "--release",
-            "--target=$platformTuple",
-            "--target-dir",
-            targetDir.get().path
-        )
+        if (cross) {
+            project.rustupRun(
+                "build",
+                "--release",
+                "--target=$platformTuple",
+                "--target-dir",
+                targetDir.get().path,
+                program = "cross"
+            )
+        } else {
+            project.cargoRun(
+                "build",
+                "--release",
+                "--target=$platformTuple",
+                "--target-dir",
+                targetDir.get().path
+            )
+        }
     }
 }

@@ -1,0 +1,4 @@
+[submodule "tokenizers"]
+	path = tokenizers
+	url = https://github.com/zhufucdev/tokenizers
+	branch = git_v0.21.1

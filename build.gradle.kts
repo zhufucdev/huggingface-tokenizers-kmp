@@ -5,6 +5,7 @@ import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.konan.target.Family
 
 plugins {
     `crab-multiplatform`
@@ -16,6 +17,16 @@ plugins {
 repositories {
     google()
     mavenCentral()
+}
+
+crabAndroid {
+    libName = Library.name
+    cross = true
+}
+
+crabJvm {
+    libName = Library.name
+    cross = true
 }
 
 kotlin {
@@ -58,7 +69,10 @@ kotlin {
         iosArm64(),
         iosSimulatorArm64()
     ).forEach {
-        it.setupRustCompilationTask()
+        it.crabNative {
+            libName = Library.name
+            cross = it.konanTarget.family != Family.IOS && it.konanTarget.family != Family.OSX
+        }
         it.binaries {
             sharedLib()
             staticLib()
@@ -125,11 +139,11 @@ mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
     signAllPublications()
 
-    coordinates(Library.namespace, "kotlin", "0.1.0")
+    coordinates(Library.namespace, "core", "0.1.0")
     pom {
-        name = "Vectoria"
-        description = "Single purpose KMP vector database for KNN search."
-        url = "https://github.com/zhufucdev/vectoria-kt"
+        name = "Hugging Face Tokenizers KMP"
+        description = "Kotlin binding to the Hugging Face tokenizers, as a Multiplatform library."
+        url = "https://github.com/zhufucdev/huggingface-tokenizers-kmp"
 
         licenses {
             license {
@@ -145,9 +159,9 @@ mavenPublishing {
             }
         }
         scm {
-            url = "https://github.com/zhufucdev/vectoria-kt"
-            connection = "scm:git:git://github.com/zhufucdev/vectoria-kt.git"
-            developerConnection = "scm:git:ssh://github.com/zhufucdev/vectoria-kt.git"
+            url = "https://github.com/zhufucdev/huggingface-tokenizers-kmp"
+            connection = "scm:git:git://github.com/zhufucdev/huggingface-tokenizers-kmp.git"
+            developerConnection = "scm:git:ssh://github.com/zhufucdev/huggingface-tokenizers-kmp.git"
         }
     }
 }

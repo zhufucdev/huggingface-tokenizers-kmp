@@ -1,6 +1,15 @@
+import gradle.kotlin.dsl.accessors._611a75feaf31951ac969a948928e6651.android
+import gradle.kotlin.dsl.accessors._611a75feaf31951ac969a948928e6651.androidComponents
+import gradle.kotlin.dsl.accessors._611a75feaf31951ac969a948928e6651.sourceSets
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.tasks.Copy
+import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.support.uppercaseFirstChar
+import org.gradle.kotlin.dsl.withType
+import org.gradle.language.jvm.tasks.ProcessResources
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.konan.target.KonanTarget
 
@@ -26,8 +35,8 @@ data class RustSetupResult(val build: CargoCompile, val test: Task)
 internal fun setupRustTask(
     konanTarget: KonanTarget,
     project: Project,
-    libName: String? = null,
     platform: String = rustupTarget[konanTarget]!!,
+    configure: CargoCompile.() -> Unit = {}
 ): RustSetupResult {
     val taskName = konanTarget.taskName
     val targetArchDir = "target/${platform}"
@@ -42,10 +51,11 @@ internal fun setupRustTask(
     val build =
         project.tasks.registerSafe("buildRust${taskName}", CargoCompile::class.java) {
             finalizedBy(project.tasks.generateHeaders)
-            dependsOn(prepareToolchain)
-
             konanTarget(konanTarget)
-            libName?.let { libName(it) }
+            configure(this)
+            if (!cross) {
+                dependsOn(prepareToolchain)
+            }
         }
 
     val test =
@@ -58,13 +68,13 @@ internal fun setupRustTask(
     return RustSetupResult(build, test)
 }
 
-fun KotlinNativeTarget.setupRustCompilationTask(): RustSetupResult {
+fun KotlinNativeTarget.crabNative(configure: CargoCompile.() -> Unit): RustSetupResult {
     val targetTuple = rustupTarget[konanTarget] ?: error("Target ${konanTarget.name} is not supported.")
     val setupResult = setupRustTask(
         konanTarget = konanTarget,
         project = project,
-        libName = Library.name,
-        platform = targetTuple
+        platform = targetTuple,
+        configure = configure
     )
 
     binaries {
@@ -89,4 +99,85 @@ fun KotlinNativeTarget.setupRustCompilationTask(): RustSetupResult {
         .dependsOn(setupResult.build, project.tasks.generateHeaders)
 
     return setupResult
+}
+
+fun Project.crabAndroid(configure: CargoCompile.() -> Unit) {
+    data class AndroidSetup(
+        val abi: String,
+        val konanTarget: KonanTarget,
+        val crab: RustSetupResult = setupRustTask(konanTarget, project, configure = configure),
+    )
+
+    val androidSetups = listOf(
+        AndroidSetup("x86_64", KonanTarget.ANDROID_X64),
+        AndroidSetup("arm64-v8a", KonanTarget.ANDROID_ARM64)
+    )
+    val buildJniLibsDir = project.layout.buildDirectory.dir("jniLibs")
+    val copyAbiJniLibs = androidSetups.map { setup ->
+        val copy = tasks.register("copy${setup.abi.uppercaseFirstChar()}JniLibs", Copy::class) {
+            dependsOn(setup.crab.build)
+            from(setup.crab.build.binaryFile)
+            into(buildJniLibsDir.map { it.file(setup.abi) })
+        }
+        setup.crab.build.finalizedBy(copy)
+        copy
+    }
+
+    androidComponents {
+        onVariants { variant ->
+            afterEvaluate {
+                tasks.withType<com.android.build.gradle.internal.tasks.BaseTask>().configureEach {
+                    dependsOn(*copyAbiJniLibs.toTypedArray())
+                }
+            }
+        }
+    }
+
+    afterEvaluate {
+        android {
+            sourceSets.configureEach {
+                jniLibs.srcDir(buildJniLibsDir)
+            }
+        }
+    }
+}
+
+fun Project.crabJvm(configure: CargoCompile.() -> Unit) {
+    val jvmSetups =
+        listOf(
+            KonanTarget.MACOS_ARM64,
+            KonanTarget.MACOS_X64,
+            KonanTarget.LINUX_ARM64,
+            KonanTarget.LINUX_X64,
+            KonanTarget.MINGW_X64
+        ).map { setupRustTask(it, project, configure = configure) }
+    val jniResourceDir = layout.buildDirectory.dir("jniResources")
+
+    val copyJniResources = jvmSetups.map { setup ->
+        val platform = setup.build.konanTarget.taskName
+        tasks.register<Copy>("copy${platform}JniResources") {
+            dependsOn(setup.build)
+            from(setup.build.binaryFile)
+            val family = setup.build.konanTarget.family
+            rename {
+                "${family.dynamicPrefix}${setup.build.libName}${platform}.${family.dynamicSuffix}"
+            }
+            into(jniResourceDir)
+        }
+    }
+
+    tasks.withType<ProcessResources>().configureEach {
+        dependsOn(*copyJniResources.toTypedArray())
+    }
+
+    afterEvaluate {
+        extensions.configure(KotlinMultiplatformExtension::class) {
+            sourceSets {
+                jvmMain.configure {
+                    resources.srcDir(jniResourceDir)
+                }
+            }
+        }
+    }
+
 }

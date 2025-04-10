@@ -11,4 +11,7 @@ path = "src/rustMain/lib.rs"
 
 [dependencies]
 jni = "0.21.1"
-tokenizers = { version = "0.21.1", features = ["http"] }
+tokenizers = { version = "0.21.1", default-features = false, features = ["http", "esaxx_fast", "fancy-regex"] }
+
+[patch.crates-io]
+tokenizers = { path = "./tokenizers/tokenizers" }
