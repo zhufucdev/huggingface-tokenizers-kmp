@@ -6,6 +6,11 @@ pub mod bridge {
         Ok(Box::into_raw(b) as usize)
     }
 
+    pub fn new_tokenizer_from_file(filename: &str) -> Result<usize, tokenizers::Error> {
+        let b = Box::new(Tokenizer::from_file(filename)?);
+        Ok(Box::into_raw(b) as usize)
+    }
+
     pub fn tokenizer_encode
     (
         ptr: usize,
@@ -29,7 +34,7 @@ pub mod bridge {
         let en = unsafe { (ptr as *mut Encoding).as_ref() }?;
         Some(Vec::from(en.get_tokens()))
     }
-    
+
     pub fn encoding_get_ids(ptr: usize) -> Option<Vec<u32>> {
         let en = unsafe { (ptr as *mut Encoding).as_ref() }?;
         Some(Vec::from(en.get_ids()))

@@ -89,6 +89,8 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
+                implementation(libs.ktor.client.core)
+                implementation(libs.kotlinx.io.core)
             }
         }
         val jvmMain by getting {
@@ -99,9 +101,17 @@ kotlin {
                 implementation(libs.kotest.runner.junit5)
             }
         }
+        val jvmCommonTest by getting {
+            dependencies {
+                implementation(libs.ktor.client.cio)
+            }
+        }
         val nativeMain by getting {
         }
-        val nativeTest by getting {
+        val appleTest by getting {
+            dependencies {
+                implementation(libs.ktor.client.darwin)
+            }
         }
 
         val androidInstrumentedTest by getting {

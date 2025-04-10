@@ -31,6 +31,25 @@ pub extern "system" fn Java_NativeBridge_newTokenizerFromPretrained(
 }
 
 #[no_mangle]
+pub extern "system" fn Java_NativeBridge_newTokenizerFromFile(
+    mut env: JNIEnv,
+    _: JClass,
+    filename: JString,
+) -> jlong {
+    let filename: String = env
+        .get_string(&filename)
+        .expect("JNI string conversion failed.")
+        .into();
+    match bridge::new_tokenizer_from_file(filename.as_str()) {
+        Ok(ptr) => ptr as jlong,
+        Err(err) => {
+            env.throw(err.to_string()).unwrap();
+            0
+        }
+    }
+}
+
+#[no_mangle]
 pub extern "system" fn Java_NativeBridge_tokenizerEncode(
     mut env: JNIEnv,
     _: JClass,

@@ -3,5 +3,6 @@ expect class Tokenizer {
 
     companion object {
         fun fromPretrained(identifier: String): Tokenizer
+        fun fromFile(filename: String): Tokenizer
     }
 }

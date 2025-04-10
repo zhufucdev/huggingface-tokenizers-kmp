@@ -15,5 +15,12 @@ actual class Tokenizer private constructor(private val ptr: Long) {
             } catch (e: RuntimeException) {
                 error(e.message!!)
             }
+
+        actual fun fromFile(filename: String): Tokenizer =
+            try {
+                Tokenizer(NativeBridge.newTokenizerFromFile(filename))
+            } catch (e: RuntimeException) {
+                error(e.message!!)
+            }
     }
 }

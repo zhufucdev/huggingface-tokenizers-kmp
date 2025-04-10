@@ -2,6 +2,7 @@
 
 import kotlinx.cinterop.*
 import lib.new_tokenizer_from_pretrained
+import lib.new_tokenizer_from_file
 import lib.tokenizer_encode
 
 actual class Tokenizer private constructor(private val inner: CPointer<out CPointed>) {
@@ -16,6 +17,15 @@ actual class Tokenizer private constructor(private val inner: CPointer<out CPoin
     actual companion object {
         actual fun fromPretrained(identifier: String): Tokenizer {
             new_tokenizer_from_pretrained(identifier).useContents {
+                value?.let { return Tokenizer(it) }
+                error_msg?.use { error(it.toKString()) }
+            }
+
+            error(ERROR_EMPTY_RESULT)
+        }
+
+        actual fun fromFile(filename: String): Tokenizer {
+            new_tokenizer_from_file(filename).useContents {
                 value?.let { return Tokenizer(it) }
                 error_msg?.use { error(it.toKString()) }
             }

@@ -23,6 +23,18 @@ pub unsafe extern "C" fn new_tokenizer_from_pretrained(
 }
 
 #[no_mangle]
+pub unsafe  extern "C" fn new_tokenizer_from_file(filename: *const c_char) -> Result<*const c_void> {
+    match bridge::new_tokenizer_from_file(
+        CStr::from_ptr(filename)
+            .to_str()
+            .expect("FFI string conversion failed.")
+    ) {
+        Ok(ptr) => Result::ok(ptr as *const c_void),
+        Err(err) => Result::error_to_str_nilptr(err)
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn tokenizer_encode(
     ptr: *const c_void,
     content: *const c_char,
