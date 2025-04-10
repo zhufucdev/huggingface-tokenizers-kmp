@@ -1,4 +1,6 @@
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class EncodingTest {
@@ -11,5 +13,12 @@ class EncodingTest {
         val encoding = tokenizer.encode("Hey there!")
         assertTrue("Getting empty tokens") { encoding.tokens.isNotEmpty() }
         assertTrue("Getting empty ids") { encoding.ids.isNotEmpty() }
+    }
+
+    @Test
+    fun encode_one_with_special_tokens() {
+        val encoding = tokenizer.encode("Hey there!", addSpecialTokens = true)
+        assertEquals(5, encoding.size, "Unmatching encoding length")
+        assertContentEquals(listOf(101u, 4403u, 1175u, 106u, 102u), encoding.ids, "Unmatching tokens")
     }
 }
