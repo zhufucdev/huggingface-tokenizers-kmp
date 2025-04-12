@@ -2,6 +2,7 @@ import tokenizers.Tokenizer
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class EncodingTest {
@@ -30,5 +31,15 @@ class EncodingTest {
         encodings.forEachIndexed { index, encoding ->
             assertTrue("Empty result at index $index") { encoding.size > 0 }
         }
+    }
+
+    @Test
+    fun equality_test() {
+        val text = "What's good."
+        val (a, b) = tokenizer.encode(text) to tokenizer.encode(text)
+        assertEquals(a, b)
+
+        val c = tokenizer.encode(text.replace(".", "?"))
+        assertNotEquals(a, c, "Inequality failed")
     }
 }

@@ -59,4 +59,10 @@ pub mod bridge {
         let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
         Some(en.len())
     }
+    
+    pub fn encoding_eq(ptr: &usize, other_ptr: &usize) -> Option<bool> {
+        let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
+        let en_other = unsafe { (*other_ptr as *mut Encoding).as_ref() }?;
+        Some(en == en_other)
+    }
 }

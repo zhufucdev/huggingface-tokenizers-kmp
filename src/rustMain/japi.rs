@@ -187,3 +187,25 @@ pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetLen(
         Some(len) => len as jint,
     }
 }
+
+#[no_mangle]
+pub extern "system" fn Java_tokenizers_NativeBridge_encodingEq(
+    mut env: JNIEnv,
+    _: JClass,
+    ptr: jlong,
+    other_ptr: jlong
+) -> jboolean {
+    match bridge::encoding_eq(&(ptr as usize), &(other_ptr as usize)) {
+        None => {
+            env.throw("Null encoding pointer.").unwrap();
+            0
+        }
+        Some(eq) => {
+            if eq {
+                1u8
+            } else {
+                0u8
+            }
+        }
+    }
+}

@@ -111,6 +111,14 @@ pub extern "C" fn encoding_get_len(ptr: *const c_void) -> Result<usize> {
 }
 
 #[no_mangle]
+pub extern "C" fn encoding_eq(ptr: *const c_void, other_ptr: *const c_void) -> Result<bool> {
+    match bridge::encoding_eq(&(ptr as usize), &(other_ptr as usize)) {
+        None => Result::error(false, "Nil encoding pointer."),
+        Some(eq) => Result::ok(eq)
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn release_cstring_ptr(ptr: *mut c_char) {
     _ = CString::from_raw(ptr);
 }

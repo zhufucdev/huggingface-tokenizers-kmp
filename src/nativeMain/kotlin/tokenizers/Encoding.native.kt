@@ -8,6 +8,7 @@ import lib.encoding_get_tokens
 import lib.encoding_get_ids
 import lib.encoding_get_len
 import lib.release_list
+import lib.encoding_eq
 
 actual class Encoding private constructor(private val inner: CPointer<out CPointed>) {
     actual val tokens: List<String> by lazy {
@@ -45,7 +46,20 @@ actual class Encoding private constructor(private val inner: CPointer<out CPoint
         }
     }
 
+    actual override fun equals(other: Any?): Boolean =
+        other is Encoding && encoding_eq(inner, other.inner).useContents {
+            error_msg?.use { error(it.toKString()) }
+            value
+        }
+
     companion object {
         internal fun fromC(ptr: CPointer<out CPointed>): Encoding = Encoding(ptr)
+    }
+
+    actual override fun hashCode(): Int {
+        var result = size
+        result = 31 * result + tokens.hashCode()
+        result = 31 * result + ids.hashCode()
+        return result
     }
 }
