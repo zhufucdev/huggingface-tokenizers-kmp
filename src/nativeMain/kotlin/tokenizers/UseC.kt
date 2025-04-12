@@ -1,5 +1,7 @@
 @file:OptIn(ExperimentalForeignApi::class)
 
+package tokenizers
+
 import kotlinx.cinterop.ByteVarOf
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi

@@ -1,3 +1,5 @@
+package tokenizers
+
 actual class Encoding private constructor(ptr: Long) {
     actual val tokens: List<String> by lazy {
         try {

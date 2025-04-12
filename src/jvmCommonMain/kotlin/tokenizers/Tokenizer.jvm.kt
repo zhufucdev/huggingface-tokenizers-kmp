@@ -1,3 +1,5 @@
+package tokenizers
+
 actual class Tokenizer private constructor(private val ptr: Long) {
     actual fun encode(input: String, withSpecialTokens: Boolean): Encoding {
         val encodingPtr = try {

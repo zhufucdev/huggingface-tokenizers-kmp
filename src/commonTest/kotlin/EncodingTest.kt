@@ -1,3 +1,4 @@
+import tokenizers.Tokenizer
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals

@@ -1,6 +1,9 @@
 @file:OptIn(ExperimentalForeignApi::class)
 
+package tokenizers
+
 import kotlinx.cinterop.*
+import kotlinx.cinterop.get
 import lib.encoding_get_tokens
 import lib.encoding_get_ids
 import lib.encoding_get_len

@@ -11,7 +11,7 @@ pub extern "system" fn Java_Platform_plus(_: JNIEnv, _: JClass, a: i32, b: i32) 
 }
 
 #[no_mangle]
-pub extern "system" fn Java_NativeBridge_newTokenizerFromPretrained(
+pub extern "system" fn Java_tokenizers_NativeBridge_newTokenizerFromPretrained(
     mut env: JNIEnv,
     _: JClass,
     identifier: JString,
@@ -31,7 +31,7 @@ pub extern "system" fn Java_NativeBridge_newTokenizerFromPretrained(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_NativeBridge_newTokenizerFromFile(
+pub extern "system" fn Java_tokenizers_NativeBridge_newTokenizerFromFile(
     mut env: JNIEnv,
     _: JClass,
     filename: JString,
@@ -50,7 +50,7 @@ pub extern "system" fn Java_NativeBridge_newTokenizerFromFile(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_NativeBridge_tokenizerEncode(
+pub extern "system" fn Java_tokenizers_NativeBridge_tokenizerEncode(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
@@ -75,7 +75,7 @@ pub extern "system" fn Java_NativeBridge_tokenizerEncode(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_NativeBridge_tokenizerEncodeBatch(
+pub extern "system" fn Java_tokenizers_NativeBridge_tokenizerEncodeBatch(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
@@ -121,12 +121,12 @@ pub extern "system" fn Java_NativeBridge_tokenizerEncodeBatch(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_NativeBridge_encodingGetTokens(
+pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetTokens(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
 ) -> jobjectArray {
-    match bridge::encoding_get_tokens(ptr as usize) {
+    match bridge::encoding_get_tokens(&(ptr as usize)) {
         None => {
             env.throw("Null encoding pointer.").unwrap();
             0 as jobjectArray
@@ -147,12 +147,12 @@ pub extern "system" fn Java_NativeBridge_encodingGetTokens(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_NativeBridge_encodingGetIds(
+pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetIds(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
 ) -> jintArray {
-    match bridge::encoding_get_ids(ptr as usize) {
+    match bridge::encoding_get_ids(&(ptr as usize)) {
         None => {
             env.throw("Null encoding pointer.").unwrap();
             0 as jintArray
@@ -162,8 +162,8 @@ pub extern "system" fn Java_NativeBridge_encodingGetIds(
             env.set_int_array_region(
                 &array,
                 0,
-                ids.into_iter()
-                    .map(|id| id as jint)
+                ids.iter()
+                    .map(|id| *id as jint)
                     .collect::<Vec<jint>>()
                     .as_slice(),
             )
@@ -174,12 +174,12 @@ pub extern "system" fn Java_NativeBridge_encodingGetIds(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_NativeBridge_encodingGetLen(
+pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetLen(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
 ) -> jint {
-    match bridge::encoding_get_len(ptr as usize) {
+    match bridge::encoding_get_len(&(ptr as usize)) {
         None => {
             env.throw("Null encoding pointer.").unwrap();
             0

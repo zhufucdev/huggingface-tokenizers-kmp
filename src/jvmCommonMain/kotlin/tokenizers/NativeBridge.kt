@@ -1,3 +1,5 @@
+package tokenizers
+
 internal object NativeBridge {
     init {
         platformLoadLib()

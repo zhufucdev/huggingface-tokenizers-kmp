@@ -1,3 +1,5 @@
+package tokenizers
+
 import java.io.File
 
 data class Jni(val prefix: String = "", val postfix: String, val platformTuple: String) {
@@ -19,7 +21,7 @@ private fun getCopy(): File {
         ?: error("Platform (os = $osName, arch = $osArch) is not supported.")
 
     val ips = NativeBridge.javaClass.getResourceAsStream(jni.filename)
-        ?: error("Should never happen. Jni filename = ${jni.filename}")
+        ?: error("Should never happen. tokenizers.Jni filename = ${jni.filename}")
     val libFile = File.createTempFile(LIB_NAME, jni.platformTuple)
     ips.use {
         libFile.outputStream().use { ops ->
