@@ -9,6 +9,9 @@ import lib.encoding_get_ids
 import lib.encoding_get_len
 import lib.release_list
 import lib.encoding_eq
+import lib.release_encoding
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.createCleaner
 
 actual class Encoding private constructor(private val inner: CPointer<out CPointed>) {
     actual val tokens: List<String> by lazy {
@@ -51,6 +54,11 @@ actual class Encoding private constructor(private val inner: CPointer<out CPoint
             error_msg?.use { error(it.toKString()) }
             value
         }
+
+    @OptIn(ExperimentalNativeApi::class)
+    private val cleaner = createCleaner(inner) {
+        release_encoding(it)
+    }
 
     companion object {
         internal fun fromC(ptr: CPointer<out CPointed>): Encoding = Encoding(ptr)

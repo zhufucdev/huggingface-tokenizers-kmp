@@ -209,3 +209,21 @@ pub extern "system" fn Java_tokenizers_NativeBridge_encodingEq(
         }
     }
 }
+
+#[no_mangle]
+pub extern "system" fn Java_tokenizers_NativeBridge_releaseTokenizer(
+    _: JNIEnv,
+    _: JClass,
+    ptr: jlong
+) {
+    bridge::release_tokenizer(ptr as usize)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_tokenizers_NativeBridge_releaseEncoding(
+    _: JNIEnv,
+    _: JClass,
+    ptr: jlong
+) {
+    bridge::release_encoding(ptr as usize)
+}

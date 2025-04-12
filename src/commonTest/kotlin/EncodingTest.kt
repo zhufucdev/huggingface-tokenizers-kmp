@@ -1,27 +1,22 @@
 import tokenizers.Tokenizer
-import kotlin.test.Test
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class EncodingTest {
-    val tokenizer: Tokenizer by lazy {
-        Tokenizer.fromPretrained(MODEL_ID)
-    }
+    val tokenizer: Tokenizer
+        get() = Tokenizer.fromPretrained(MODEL_ID)
 
     @Test
     fun encode_one_without_special_tokens() {
-        val encoding = tokenizer.encode("Hey there!", withSpecialTokens = false)
-        assertTrue("Getting empty tokens") { encoding.tokens.isNotEmpty() }
-        assertTrue("Getting empty ids") { encoding.ids.isNotEmpty() }
+        val en = tokenizer.encode("Hey there!", withSpecialTokens = false)
+        assertTrue("Getting empty tokens") { en.tokens.isNotEmpty() }
+        assertTrue("Getting empty ids") { en.ids.isNotEmpty() }
     }
 
     @Test
     fun encode_one() {
-        val encoding = tokenizer.encode("Hey there!")
-        assertEquals(5, encoding.size, "Mismatching encoding length")
-        assertContentEquals(listOf(101u, 4403u, 1175u, 106u, 102u), encoding.ids, "Mismatching tokens")
+        val en = tokenizer.encode("Hey there!")
+        assertEquals(5, en.size, "Mismatching encoding length")
+        assertContentEquals(listOf(101u, 4403u, 1175u, 106u, 102u), en.ids, "Mismatching tokens")
     }
 
     @Test

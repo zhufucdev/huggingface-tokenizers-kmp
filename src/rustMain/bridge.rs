@@ -44,6 +44,10 @@ pub mod bridge {
             Err(err) => Some(Err(err)),
         }
     }
+    
+    pub fn release_tokenizer(ptr: usize) {
+        _ = unsafe { Box::from_raw(ptr as *mut Tokenizer) };
+    }
 
     pub fn encoding_get_tokens(ptr: &usize) -> Option<&[String]> {
         let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
@@ -59,10 +63,14 @@ pub mod bridge {
         let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
         Some(en.len())
     }
-    
+
     pub fn encoding_eq(ptr: &usize, other_ptr: &usize) -> Option<bool> {
         let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
         let en_other = unsafe { (*other_ptr as *mut Encoding).as_ref() }?;
         Some(en == en_other)
+    }
+    
+    pub fn release_encoding(ptr: usize) {
+        _ = unsafe { Box::from_raw(ptr as *mut Encoding) }
     }
 }

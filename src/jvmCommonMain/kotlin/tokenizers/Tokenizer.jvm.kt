@@ -18,6 +18,10 @@ actual class Tokenizer private constructor(private val ptr: Long) {
             error(e.message!!)
         }
 
+    protected fun finalize() {
+        NativeBridge.releaseTokenizer(ptr)
+    }
+
     actual companion object {
         actual fun fromPretrained(identifier: String): Tokenizer =
             try {

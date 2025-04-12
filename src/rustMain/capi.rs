@@ -119,6 +119,16 @@ pub extern "C" fn encoding_eq(ptr: *const c_void, other_ptr: *const c_void) -> R
 }
 
 #[no_mangle]
+pub extern "C" fn release_tokenizer(ptr: *mut c_void) {
+    bridge::release_tokenizer(ptr as usize)
+}
+
+#[no_mangle]
+pub extern "C" fn release_encoding(ptr: *mut c_void) {
+    bridge::release_encoding(ptr as usize)
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn release_cstring_ptr(ptr: *mut c_char) {
     _ = CString::from_raw(ptr);
 }

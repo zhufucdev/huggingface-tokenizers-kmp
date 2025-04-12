@@ -37,6 +37,10 @@ actual class Encoding private constructor(private val ptr: Long) {
         return result
     }
 
+    protected fun finalize() {
+        NativeBridge.releaseEncoding(ptr)
+    }
+
     companion object {
         fun fromPtr(ptr: Long) = Encoding(ptr)
     }

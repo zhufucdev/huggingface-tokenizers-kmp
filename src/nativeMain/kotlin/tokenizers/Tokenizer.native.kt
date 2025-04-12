@@ -9,6 +9,9 @@ import lib.new_tokenizer_from_pretrained
 import lib.tokenizer_encode
 import lib.tokenizer_encode_batch
 import lib.release_list
+import lib.release_tokenizer
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.createCleaner
 
 actual class Tokenizer private constructor(private val inner: CPointer<out CPointed>) {
     actual fun encode(input: String, withSpecialTokens: Boolean): Encoding {
@@ -38,6 +41,11 @@ actual class Tokenizer private constructor(private val inner: CPointer<out CPoin
             }
             error(ERROR_EMPTY_RESULT)
         }
+
+    @OptIn(ExperimentalNativeApi::class)
+    private val cleaner = createCleaner(inner) {
+        release_tokenizer(it)
+    }
 
     actual companion object {
         actual fun fromPretrained(identifier: String): Tokenizer {
