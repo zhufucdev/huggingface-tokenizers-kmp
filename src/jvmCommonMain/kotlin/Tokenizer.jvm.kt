@@ -1,12 +1,20 @@
 actual class Tokenizer private constructor(private val ptr: Long) {
-    actual fun encode(content: String, addSpecialTokens: Boolean): Encoding {
+    actual fun encode(input: String, addSpecialTokens: Boolean): Encoding {
         val encodingPtr = try {
-            NativeBridge.tokenizerEncode(ptr, content, addSpecialTokens)
+            NativeBridge.tokenizerEncode(ptr, input, addSpecialTokens)
         } catch (e: RuntimeException) {
             error(e.message!!)
         }
         return Encoding.fromPtr(encodingPtr)
     }
+
+    actual fun encode(inputs: List<String>, addSpecialTokens: Boolean): List<Encoding> =
+        try {
+            NativeBridge.tokenizerEncodeBatch(ptr, inputs.toTypedArray(), addSpecialTokens)
+                .map(Encoding::fromPtr)
+        } catch (e: RuntimeException) {
+            error(e.message!!)
+        }
 
     actual companion object {
         actual fun fromPretrained(identifier: String): Tokenizer =

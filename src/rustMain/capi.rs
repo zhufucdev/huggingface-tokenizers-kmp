@@ -37,18 +37,48 @@ pub unsafe extern "C" fn new_tokenizer_from_file(filename: *const c_char) -> Res
 #[no_mangle]
 pub extern "C" fn tokenizer_encode(
     ptr: *const c_void,
-    content: *const c_char,
+    input: *const c_char,
     add_special_tokens: bool,
 ) -> Result<*const c_void> {
-    let content = unsafe {
-        CStr::from_ptr(content)
+    let input = unsafe {
+        CStr::from_ptr(input)
             .to_str()
             .expect("FFI string conversion failed.")
     };
-    match bridge::tokenizer_encode(ptr as usize, content, add_special_tokens) {
+    match bridge::tokenizer_encode(ptr as usize, input, add_special_tokens) {
         None => Result::error_nilptr("Nil tokenizer pointer."),
         Some(Ok(ptr)) => Result::ok(ptr as *const c_void),
         Some(Err(err)) => Result::error_to_str_nilptr(err),
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn tokenizer_encode_batch(
+    ptr: *const c_void,
+    inputs: *const *const c_char,
+    input_count: c_int,
+    add_special_tokens: bool,
+) -> Result<List<*const c_void>> {
+    let inputs = {
+        let mut vec = Vec::with_capacity(input_count as usize);
+        for i in 0..input_count {
+            match inputs.offset(i as isize).as_ref() {
+                None => return Result::error_empty(format!("Nil pointer at input index {}", i)),
+                Some(input) => vec.push(
+                    CStr::from_ptr(*input)
+                        .to_str()
+                        .expect("FFI string conversion failed."),
+                ),
+            }
+        }
+        vec
+    };
+    match bridge::tokenizer_encode_batch(ptr as usize, inputs, add_special_tokens) {
+        None => Result::error_empty("Nil tokenizer pointer."),
+        Some(Ok(pointers)) => Result::ok(List::from_vec(
+            pointers.iter().map(|p| *p as *const c_void).collect(),
+        )),
+        Some(Err(err)) => Result::error_to_str_empty(err),
     }
 }
 
@@ -82,7 +112,7 @@ pub unsafe extern "C" fn encoding_get_ids(ptr: *const c_void) -> Result<List<c_u
 pub extern "C" fn encoding_get_len(ptr: *const c_void) -> Result<usize> {
     match bridge::encoding_get_len(ptr as usize) {
         None => Result::error(0, "Nil encoding pointer."),
-        Some(len) => Result::ok(len)
+        Some(len) => Result::ok(len),
     }
 }
 
@@ -117,13 +147,13 @@ impl<T> Result<T> {
     }
 }
 
-impl Result<*const c_void> {
+impl<T> Result<*const T> {
     pub fn error_nilptr<E: Debug>(error: E) -> Self {
-        Self::error(0 as *const c_void, error)
+        Self::error(0 as *const T, error)
     }
 
     pub fn error_to_str_nilptr<E: ToString>(error: E) -> Self {
-        Self::error_to_str(0 as *const c_void, error)
+        Self::error_to_str(0 as *const T, error)
     }
 }
 

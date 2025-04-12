@@ -21,4 +21,13 @@ class EncodingTest {
         assertEquals(5, encoding.size, "Unmatching encoding length")
         assertContentEquals(listOf(101u, 4403u, 1175u, 106u, 102u), encoding.ids, "Unmatching tokens")
     }
+
+    @Test
+    fun encode_many() {
+        val encodings = tokenizer.encode(listOf("Salut!", "Hey there!", "¡hola!"))
+        assertEquals(3, encodings.size)
+        encodings.forEachIndexed { index, encoding ->
+            assertTrue("Empty result at index $index") { encoding.size > 0 }
+        }
+    }
 }

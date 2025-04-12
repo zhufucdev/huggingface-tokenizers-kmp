@@ -1,7 +1,7 @@
 use crate::bridge::bridge;
 use crate::capi::plus;
-use jni::objects::{JClass, JString};
-use jni::sys::{jboolean, jint, jintArray, jlong, jobjectArray, jsize};
+use jni::objects::{JClass, JObjectArray, JString};
+use jni::sys::{jboolean, jint, jintArray, jlong, jlongArray, jobjectArray, jsize};
 use jni::JNIEnv;
 
 #[no_mangle]
@@ -18,7 +18,7 @@ pub extern "system" fn Java_NativeBridge_newTokenizerFromPretrained(
 ) -> jlong {
     let id: String = env
         .get_string(&identifier)
-        .expect("JNI string conversion failed.")
+        .expect("JNI string conversion failed")
         .into();
 
     match bridge::new_tokenizer_from_pretrained(id.as_str()) {
@@ -54,22 +54,68 @@ pub extern "system" fn Java_NativeBridge_tokenizerEncode(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
-    content: JString,
+    input: JString,
     add_special_tokens: jboolean,
 ) -> jlong {
-    let content: String = env
-        .get_string(&content)
-        .expect("JNI string conversion failed.")
+    let input: String = env
+        .get_string(&input)
+        .expect("JNI string conversion failed")
         .into();
-    match bridge::tokenizer_encode(ptr as usize, content.as_str(), add_special_tokens == 1u8) {
+    match bridge::tokenizer_encode(ptr as usize, input.as_str(), add_special_tokens == 1u8) {
         None => {
-            env.throw("Null tokenizer pointer.").unwrap();
+            env.throw("Null tokenizer pointer").unwrap();
             0
         }
         Some(Ok(ptr)) => ptr as jlong,
         Some(Err(err)) => {
             env.throw(err.to_string()).unwrap();
             0
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_NativeBridge_tokenizerEncodeBatch(
+    mut env: JNIEnv,
+    _: JClass,
+    ptr: jlong,
+    inputs: JObjectArray,
+    add_special_tokens: bool,
+) -> jlongArray {
+    let len = env.get_array_length(&inputs).expect("Inputs has no length");
+    let inputs: Vec<String> = (0..len)
+        .map(|idx| {
+            let jstr: JString = env
+                .get_object_array_element(&inputs, idx)
+                .expect(format!("Failed to index inputs at {idx}").as_str())
+                .into();
+            let java_str = env.get_string(&jstr).expect("JNI String conversion failed");
+            java_str.to_str().unwrap().to_string()
+        })
+        .collect();
+
+    match bridge::tokenizer_encode_batch(ptr as usize, inputs, add_special_tokens) {
+        None => {
+            env.throw("Null tokenizer pointer.").unwrap();
+            0 as jlongArray
+        }
+        Some(Ok(pointers)) => {
+            let array = env.new_long_array(pointers.len() as jsize).unwrap();
+            env.set_long_array_region(
+                &array,
+                0,
+                pointers
+                    .into_iter()
+                    .map(|p| p as jlong)
+                    .collect::<Vec<jlong>>()
+                    .as_slice(),
+            )
+            .unwrap();
+            array.into_raw()
+        }
+        Some(Err(err)) => {
+            env.throw(err.to_string()).unwrap();
+            0 as jlongArray
         }
     }
 }
@@ -116,8 +162,8 @@ pub extern "system" fn Java_NativeBridge_encodingGetIds(
             env.set_int_array_region(
                 &array,
                 0,
-                ids.iter()
-                    .map(|id| *id as jint)
+                ids.into_iter()
+                    .map(|id| id as jint)
                     .collect::<Vec<jint>>()
                     .as_slice(),
             )
@@ -131,13 +177,13 @@ pub extern "system" fn Java_NativeBridge_encodingGetIds(
 pub extern "system" fn Java_NativeBridge_encodingGetLen(
     mut env: JNIEnv,
     _: JClass,
-    ptr: jlong
+    ptr: jlong,
 ) -> jint {
     match bridge::encoding_get_len(ptr as usize) {
         None => {
             env.throw("Null encoding pointer.").unwrap();
             0
         }
-        Some(len) => len as jint
+        Some(len) => len as jint,
     }
 }

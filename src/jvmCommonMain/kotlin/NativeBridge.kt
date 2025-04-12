@@ -7,7 +7,9 @@ internal object NativeBridge {
 
     external fun newTokenizerFromFile(filename: String): Long
 
-    external fun tokenizerEncode(ptr: Long, content: String, addSpecialTokens: Boolean): Long
+    external fun tokenizerEncode(ptr: Long, input: String, addSpecialTokens: Boolean): Long
+
+    external fun tokenizerEncodeBatch(ptr: Long, inputs: Array<String>, addSpecialTokens: Boolean): LongArray
 
     external fun encodingGetTokens(ptr: Long): Array<String>
 
