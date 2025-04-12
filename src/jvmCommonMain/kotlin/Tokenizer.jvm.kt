@@ -1,7 +1,7 @@
 actual class Tokenizer private constructor(private val ptr: Long) {
-    actual fun encode(input: String, addSpecialTokens: Boolean): Encoding {
+    actual fun encode(input: String, withSpecialTokens: Boolean): Encoding {
         val encodingPtr = try {
-            NativeBridge.tokenizerEncode(ptr, input, addSpecialTokens)
+            NativeBridge.tokenizerEncode(ptr, input, withSpecialTokens)
         } catch (e: RuntimeException) {
             error(e.message!!)
         }

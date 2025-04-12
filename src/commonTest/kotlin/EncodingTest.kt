@@ -9,17 +9,17 @@ class EncodingTest {
     }
 
     @Test
-    fun encode_one() {
-        val encoding = tokenizer.encode("Hey there!")
+    fun encode_one_without_special_tokens() {
+        val encoding = tokenizer.encode("Hey there!", withSpecialTokens = false)
         assertTrue("Getting empty tokens") { encoding.tokens.isNotEmpty() }
         assertTrue("Getting empty ids") { encoding.ids.isNotEmpty() }
     }
 
     @Test
-    fun encode_one_with_special_tokens() {
-        val encoding = tokenizer.encode("Hey there!", addSpecialTokens = true)
-        assertEquals(5, encoding.size, "Unmatching encoding length")
-        assertContentEquals(listOf(101u, 4403u, 1175u, 106u, 102u), encoding.ids, "Unmatching tokens")
+    fun encode_one() {
+        val encoding = tokenizer.encode("Hey there!")
+        assertEquals(5, encoding.size, "Mismatching encoding length")
+        assertContentEquals(listOf(101u, 4403u, 1175u, 106u, 102u), encoding.ids, "Mismatching tokens")
     }
 
     @Test

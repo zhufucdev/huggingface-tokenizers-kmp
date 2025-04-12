@@ -7,8 +7,8 @@ import lib.tokenizer_encode
 import lib.tokenizer_encode_batch
 
 actual class Tokenizer private constructor(private val inner: CPointer<out CPointed>) {
-    actual fun encode(input: String, addSpecialTokens: Boolean): Encoding {
-        tokenizer_encode(inner, input, addSpecialTokens).useContents {
+    actual fun encode(input: String, withSpecialTokens: Boolean): Encoding {
+        tokenizer_encode(inner, input, withSpecialTokens).useContents {
             value?.let { return Encoding.fromC(it) }
             error_msg?.use { error(it.toKString()) }
         }
