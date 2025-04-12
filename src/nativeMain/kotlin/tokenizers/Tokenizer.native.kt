@@ -8,6 +8,7 @@ import lib.new_tokenizer_from_file
 import lib.new_tokenizer_from_pretrained
 import lib.tokenizer_encode
 import lib.tokenizer_encode_batch
+import lib.release_list
 
 actual class Tokenizer private constructor(private val inner: CPointer<out CPointed>) {
     actual fun encode(input: String, withSpecialTokens: Boolean): Encoding {
@@ -22,13 +23,17 @@ actual class Tokenizer private constructor(private val inner: CPointer<out CPoin
         memScoped {
             val inputsHeap = allocArrayOf(inputs.map { it.utf8.ptr })
             tokenizer_encode_batch(inner, inputsHeap, inputs.size, addSpecialTokens).useContents {
-                error_msg?.use { error(it.toKString()) }
-                value.ptr?.let {
-                    return (0 until value.len.toLong()).map { idx ->
-                        Encoding.fromC(
-                            it[idx] ?: throw NullPointerException("Encoding index = $idx")
-                        )
+                try {
+                    error_msg?.use { error(it.toKString()) }
+                    value.ptr?.reinterpret<CPointerVarOf<CPointer<*>>>()?.let {
+                        return (0 until value.len.toLong()).map { idx ->
+                            Encoding.fromC(
+                                it[idx] ?: throw NullPointerException("Encoding index = $idx")
+                            )
+                        }
                     }
+                } finally {
+                    release_list(value.readValue(), sizeOf<CArrayPointerVar<*>>().convert())
                 }
             }
             error(ERROR_EMPTY_RESULT)

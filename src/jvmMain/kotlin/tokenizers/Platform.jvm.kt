@@ -20,8 +20,8 @@ private fun getCopy(): File {
         ?.value
         ?: error("Platform (os = $osName, arch = $osArch) is not supported.")
 
-    val ips = NativeBridge.javaClass.getResourceAsStream(jni.filename)
-        ?: error("Should never happen. tokenizers.Jni filename = ${jni.filename}")
+    val ips = NativeBridge.javaClass.classLoader.getResourceAsStream(jni.filename)
+        ?: error("Should never happen. Jni filename = ${jni.filename}")
     val libFile = File.createTempFile(LIB_NAME, jni.platformTuple)
     ips.use {
         libFile.outputStream().use { ops ->
