@@ -10,6 +10,11 @@ pub mod bridge {
         let b = Box::new(Tokenizer::from_file(filename)?);
         Ok(Box::into_raw(b) as usize)
     }
+    
+    pub fn new_tokenizer_from_bytes<P : AsRef<[u8]>>(bytes: P) -> Result<usize, tokenizers::Error> {
+        let b = Box::new(Tokenizer::from_bytes(bytes)?);
+        Ok(Box::into_raw(b) as usize)
+    }
 
     pub fn tokenizer_encode(
         ptr: usize,

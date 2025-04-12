@@ -36,5 +36,12 @@ actual class Tokenizer private constructor(private val ptr: Long) {
             } catch (e: RuntimeException) {
                 error(e.message!!)
             }
+
+        actual fun fromBytes(bytes: ByteArray): Tokenizer =
+            try {
+                Tokenizer(NativeBridge.newTokenizerFromBytes(bytes))
+            } catch (e: RuntimeException) {
+                error(e.message!!)
+            }
     }
 }

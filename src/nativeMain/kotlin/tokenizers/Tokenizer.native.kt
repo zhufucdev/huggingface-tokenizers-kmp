@@ -6,6 +6,7 @@ import kotlinx.cinterop.*
 import kotlinx.cinterop.get
 import lib.new_tokenizer_from_file
 import lib.new_tokenizer_from_pretrained
+import lib.new_tokenizer_from_bytes
 import lib.tokenizer_encode
 import lib.tokenizer_encode_batch
 import lib.release_list
@@ -15,9 +16,11 @@ import kotlin.native.ref.createCleaner
 
 actual class Tokenizer private constructor(private val inner: CPointer<out CPointed>) {
     actual fun encode(input: String, withSpecialTokens: Boolean): Encoding {
-        tokenizer_encode(inner, input, withSpecialTokens).useContents {
-            value?.let { return Encoding.fromC(it) }
-            error_msg?.use { error(it.toKString()) }
+        input.usePinned { input ->
+            tokenizer_encode(inner, input.get(), withSpecialTokens).useContents {
+                value?.let { return Encoding.fromC(it) }
+                error_msg?.use { error(it.toKString()) }
+            }
         }
         error(ERROR_EMPTY_RESULT)
     }
@@ -49,18 +52,33 @@ actual class Tokenizer private constructor(private val inner: CPointer<out CPoin
 
     actual companion object {
         actual fun fromPretrained(identifier: String): Tokenizer {
-            new_tokenizer_from_pretrained(identifier).useContents {
-                value?.let { return Tokenizer(it) }
-                error_msg?.use { error(it.toKString()) }
+            identifier.usePinned { id ->
+                new_tokenizer_from_pretrained(id.get()).useContents {
+                    value?.let { return Tokenizer(it) }
+                    error_msg?.use { error(it.toKString()) }
+                }
             }
 
             error(ERROR_EMPTY_RESULT)
         }
 
         actual fun fromFile(filename: String): Tokenizer {
-            new_tokenizer_from_file(filename).useContents {
-                value?.let { return Tokenizer(it) }
-                error_msg?.use { error(it.toKString()) }
+            filename.usePinned { file ->
+                new_tokenizer_from_file(file.get()).useContents {
+                    value?.let { return Tokenizer(it) }
+                    error_msg?.use { error(it.toKString()) }
+                }
+            }
+
+            error(ERROR_EMPTY_RESULT)
+        }
+
+        actual fun fromBytes(bytes: ByteArray): Tokenizer {
+            bytes.usePinned { ba ->
+                new_tokenizer_from_bytes(ba.addressOf(0), bytes.size).useContents {
+                    value?.let { return Tokenizer(it) }
+                    error_msg?.use { error(it.toKString()) }
+                }
             }
 
             error(ERROR_EMPTY_RESULT)

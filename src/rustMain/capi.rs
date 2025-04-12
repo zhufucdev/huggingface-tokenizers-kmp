@@ -1,7 +1,7 @@
 use crate::bridge::bridge;
-use std::alloc;
+use std::{alloc, slice};
 use std::alloc::{Layout, LayoutError};
-use std::ffi::{c_char, c_int, c_void, CStr, CString};
+use std::ffi::{c_char, c_int, c_short, c_void, CStr, CString};
 use std::fmt::Debug;
 
 #[no_mangle]
@@ -30,6 +30,21 @@ pub unsafe extern "C" fn new_tokenizer_from_file(filename: *const c_char) -> Res
             .to_str()
             .expect("FFI string conversion failed."),
     ) {
+        Ok(ptr) => Result::ok(ptr as *const c_void),
+        Err(err) => Result::error_to_str_nilptr(err),
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn new_tokenizer_from_bytes(
+    bytes: *mut c_char,
+    length: c_int,
+) -> Result<*const c_void> {
+    if bytes.is_null() {
+        return Result::error_nilptr("Nil bytes pointer.")
+    }
+    let buff = slice::from_raw_parts(bytes as *const u8, length as usize);
+    match bridge::new_tokenizer_from_bytes(buff) {
         Ok(ptr) => Result::ok(ptr as *const c_void),
         Err(err) => Result::error_to_str_nilptr(err),
     }
@@ -114,7 +129,7 @@ pub extern "C" fn encoding_get_len(ptr: *const c_void) -> Result<usize> {
 pub extern "C" fn encoding_eq(ptr: *const c_void, other_ptr: *const c_void) -> Result<bool> {
     match bridge::encoding_eq(&(ptr as usize), &(other_ptr as usize)) {
         None => Result::error(false, "Nil encoding pointer."),
-        Some(eq) => Result::ok(eq)
+        Some(eq) => Result::ok(eq),
     }
 }
 
@@ -207,9 +222,12 @@ impl List {
         alloc::dealloc(self.ptr as *mut u8, self.layout::<T>()?);
         Ok(())
     }
-    
+
     pub unsafe fn dealloc_align(self, align: usize) -> std::result::Result<(), LayoutError> {
-        alloc::dealloc(self.ptr as *mut u8, Layout::from_size_align(self.len, align)?);
+        alloc::dealloc(
+            self.ptr as *mut u8,
+            Layout::from_size_align(self.len, align)?,
+        );
         Ok(())
     }
 
@@ -226,7 +244,10 @@ impl List {
         for (idx, ele) in vec.into_iter().enumerate() {
             span.offset(idx as isize).write(ele)
         }
-        Self { ptr: span as *mut u8, len }
+        Self {
+            ptr: span as *mut u8,
+            len,
+        }
     }
 }
 

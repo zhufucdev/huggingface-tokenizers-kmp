@@ -11,6 +11,8 @@ import tokenizers.Tokenizer
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
+private const val tokenizerUrl = "https://huggingface.co/google-bert/bert-base-cased/resolve/main/tokenizer.json?download=true"
+
 class InitializationTest {
     val client = newHttpClient()
 
@@ -22,7 +24,7 @@ class InitializationTest {
     @Test
     fun from_file() {
         val content = runBlocking(Dispatchers.IO) {
-            client.get("https://huggingface.co/google-bert/bert-base-cased/resolve/main/tokenizer.json?download=true")
+            client.get(tokenizerUrl)
                 .bodyAsBytes()
         }
         val file = Path(SystemTemporaryDirectory, "tokenizer.json")
@@ -39,5 +41,14 @@ class InitializationTest {
     @Test
     fun from_pretrained_error() {
         assertFailsWith(IllegalStateException::class) { Tokenizer.fromPretrained("hello") }
+    }
+
+    @Test
+    fun from_bytes() {
+        val bytes = runBlocking(Dispatchers.IO) {
+            client.get(tokenizerUrl)
+                .bodyAsBytes()
+        }
+        Tokenizer.fromBytes(bytes)
     }
 }

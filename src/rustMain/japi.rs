@@ -1,6 +1,6 @@
 use crate::bridge::bridge;
 use crate::capi::plus;
-use jni::objects::{JClass, JObjectArray, JString};
+use jni::objects::{JByteArray, JClass, JObjectArray, JString};
 use jni::sys::{jboolean, jint, jintArray, jlong, jlongArray, jobjectArray, jsize};
 use jni::JNIEnv;
 
@@ -42,6 +42,36 @@ pub extern "system" fn Java_tokenizers_NativeBridge_newTokenizerFromFile(
         .into();
     match bridge::new_tokenizer_from_file(filename.as_str()) {
         Ok(ptr) => ptr as jlong,
+        Err(err) => {
+            env.throw(err.to_string()).unwrap();
+            0
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_tokenizers_NativeBridge_newTokenizerFromBytes(
+    mut env: JNIEnv,
+    _: JClass,
+    bytes: JByteArray,
+) -> jlong {
+    let len = env
+        .get_array_length(&bytes)
+        .expect("JNI array length failed.");
+    let mut buffer = Vec::new();
+    buffer.resize(len as usize, 0);
+    match env.get_byte_array_region(&bytes, 0, &mut buffer) {
+        Ok(()) => {
+            match bridge::new_tokenizer_from_bytes(
+                buffer.into_iter().map(|b| b as u8).collect::<Vec<u8>>(),
+            ) {
+                Ok(ptr) => ptr as jlong,
+                Err(err) => {
+                    env.throw(err.to_string()).unwrap();
+                    0
+                }
+            }
+        }
         Err(err) => {
             env.throw(err.to_string()).unwrap();
             0
@@ -193,7 +223,7 @@ pub extern "system" fn Java_tokenizers_NativeBridge_encodingEq(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
-    other_ptr: jlong
+    other_ptr: jlong,
 ) -> jboolean {
     match bridge::encoding_eq(&(ptr as usize), &(other_ptr as usize)) {
         None => {
@@ -214,7 +244,7 @@ pub extern "system" fn Java_tokenizers_NativeBridge_encodingEq(
 pub extern "system" fn Java_tokenizers_NativeBridge_releaseTokenizer(
     _: JNIEnv,
     _: JClass,
-    ptr: jlong
+    ptr: jlong,
 ) {
     bridge::release_tokenizer(ptr as usize)
 }
@@ -223,7 +253,7 @@ pub extern "system" fn Java_tokenizers_NativeBridge_releaseTokenizer(
 pub extern "system" fn Java_tokenizers_NativeBridge_releaseEncoding(
     _: JNIEnv,
     _: JClass,
-    ptr: jlong
+    ptr: jlong,
 ) {
     bridge::release_encoding(ptr as usize)
 }
