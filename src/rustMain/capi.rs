@@ -1,8 +1,8 @@
 use crate::bridge::bridge;
-use std::{alloc, slice};
 use std::alloc::{Layout, LayoutError};
-use std::ffi::{c_char, c_int, c_short, c_void, CStr, CString};
+use std::ffi::{c_char, c_int, c_void, CStr, CString};
 use std::fmt::Debug;
+use std::{alloc, slice};
 
 #[no_mangle]
 pub extern "C" fn plus(a: i32, b: i32) -> i32 {
@@ -41,7 +41,7 @@ pub unsafe extern "C" fn new_tokenizer_from_bytes(
     length: c_int,
 ) -> Result<*const c_void> {
     if bytes.is_null() {
-        return Result::error_nilptr("Nil bytes pointer.")
+        return Result::error_nilptr("Nil bytes pointer.");
     }
     let buff = slice::from_raw_parts(bytes as *const u8, length as usize);
     match bridge::new_tokenizer_from_bytes(buff) {
@@ -110,10 +110,22 @@ pub unsafe extern "C" fn encoding_get_tokens(ptr: *const c_void) -> Result<List>
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn encoding_get_ids(ptr: *const c_void) -> Result<List> {
+pub extern "C" fn encoding_get_ids(ptr: *const c_void) -> Result<List> {
     match bridge::encoding_get_ids(&(ptr as usize)) {
         None => Result::error_empty("Nil encoding pointer."),
         Some(ids) => Result::ok(ids.into()),
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn encoding_get_sequence_ids(ptr: *const c_void) -> Result<List> {
+    match bridge::encoding_get_sequence_ids(&(ptr as usize)) {
+        None => Result::error_empty("Nil encoding pointer."),
+        Some(ids) => Result::ok(
+            ids.into_iter()
+                .map(|o| o.map(|id| id + 1).unwrap_or(0))
+                .collect(),
+        ),
     }
 }
 
@@ -145,7 +157,7 @@ pub extern "C" fn release_encoding(ptr: *mut c_void) {
 
 #[no_mangle]
 pub unsafe extern "C" fn release_cstring_ptr(ptr: *mut c_char) {
-    _ = CString::from_raw(ptr);
+    drop(CString::from_raw(ptr));
 }
 
 #[no_mangle]
@@ -219,15 +231,19 @@ impl List {
     }
 
     pub unsafe fn dealloc<T>(self) -> std::result::Result<(), LayoutError> {
-        alloc::dealloc(self.ptr as *mut u8, self.layout::<T>()?);
+        if !self.ptr.is_null() {
+            alloc::dealloc(self.ptr as *mut u8, self.layout::<T>()?);
+        }
         Ok(())
     }
 
     pub unsafe fn dealloc_align(self, align: usize) -> std::result::Result<(), LayoutError> {
-        alloc::dealloc(
-            self.ptr as *mut u8,
-            Layout::from_size_align(self.len, align)?,
-        );
+        if !self.ptr.is_null() {
+            alloc::dealloc(
+                self.ptr as *mut u8,
+                Layout::from_size_align(self.len, align)?,
+            );
+        }
         Ok(())
     }
 

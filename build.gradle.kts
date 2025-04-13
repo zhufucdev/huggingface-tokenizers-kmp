@@ -69,13 +69,13 @@ kotlin {
         iosArm64(),
         iosSimulatorArm64()
     ).forEach {
-        it.crabNative {
-            libName = Library.name
-            cross = it.konanTarget.family != Family.IOS && it.konanTarget.family != Family.OSX
-        }
         it.binaries {
             sharedLib()
             staticLib()
+        }
+        it.crabNative {
+            libName = Library.name
+            cross = it.konanTarget.family != Family.IOS && it.konanTarget.family != Family.OSX
         }
     }
 
@@ -149,7 +149,7 @@ mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
     signAllPublications()
 
-    coordinates(Library.namespace, "core", "0.0.2")
+    coordinates(Library.namespace, "core", "0.0.3")
     pom {
         name = "Hugging Face Tokenizers KMP"
         description = "Kotlin binding to the Hugging Face tokenizers, as a Multiplatform library."

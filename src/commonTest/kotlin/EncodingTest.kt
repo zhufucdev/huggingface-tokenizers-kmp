@@ -17,6 +17,7 @@ class EncodingTest {
         val en = tokenizer.encode("Hey there!")
         assertEquals(5, en.size, "Mismatching encoding length")
         assertContentEquals(listOf(101u, 4403u, 1175u, 106u, 102u), en.ids, "Mismatching tokens")
+        assertContentEquals(listOf(null, 0u, 0u, 0u, null), en.sequenceIds, "Mismatching sequence ids")
     }
 
     @Test

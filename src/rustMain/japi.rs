@@ -204,6 +204,33 @@ pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetIds(
 }
 
 #[no_mangle]
+pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetSequenceIds(
+    mut env: JNIEnv,
+    _: JClass,
+    ptr: jlong,
+) -> jlongArray {
+    match bridge::encoding_get_sequence_ids(&(ptr as usize)) {
+        None => {
+            env.throw("Null tokenizer pointer.").unwrap();
+            0 as jlongArray
+        }
+        Some(ids) => {
+            let array = env.new_long_array(ids.len() as jsize).unwrap();
+            env.set_long_array_region(
+                &array,
+                0,
+                ids.into_iter()
+                    .map(|o| o.map(|id| (id + 1) as jlong).unwrap_or(0))
+                    .collect::<Vec<jlong>>()
+                    .as_slice(),
+            )
+            .unwrap();
+            array.into_raw()
+        }
+    }
+}
+
+#[no_mangle]
 pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetLen(
     mut env: JNIEnv,
     _: JClass,

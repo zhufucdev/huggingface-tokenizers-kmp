@@ -19,6 +19,15 @@ actual class Encoding private constructor(private val ptr: Long) {
         }
     }
 
+    actual val sequenceIds: List<ULong?> by lazy {
+        try {
+            NativeBridge.encodingGetSequenceIds(ptr)
+                .map { if (it > 0) it.toULong() - 1u else null }
+        } catch (e: RuntimeException) {
+            throw NullPointerException(e.message)
+        }
+    }
+
     actual val size: Int by lazy {
         try {
             NativeBridge.encodingGetLen(ptr).toInt()

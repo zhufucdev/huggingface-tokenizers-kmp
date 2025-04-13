@@ -19,6 +19,8 @@ internal object NativeBridge {
 
     external fun encodingGetIds(ptr: Long): IntArray
 
+    external fun encodingGetSequenceIds(ptr: Long): LongArray
+
     external fun encodingGetLen(ptr: Long): Int
 
     external fun encodingEq(ptr: Long, otherPtr: Long): Boolean

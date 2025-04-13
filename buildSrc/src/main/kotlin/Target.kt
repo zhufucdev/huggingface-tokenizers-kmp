@@ -50,7 +50,6 @@ internal fun setupRustTask(
 
     val build =
         project.tasks.registerSafe("buildRust${taskName}", CargoCompile::class.java) {
-            finalizedBy(project.tasks.generateHeaders)
             konanTarget(konanTarget)
             configure(this)
             if (!cross) {
@@ -96,7 +95,9 @@ fun KotlinNativeTarget.crabNative(configure: CargoCompile.() -> Unit): RustSetup
     }
 
     project.tasks.named("cinteropLib${konanTarget.taskName}").get()
-        .dependsOn(setupResult.build, project.tasks.generateHeaders)
+        .dependsOn(project.tasks.generateHeaders)
+    project.tasks.named("compileKotlin${konanTarget.taskName}").get()
+        .dependsOn(setupResult.build)
 
     return setupResult
 }
@@ -179,5 +180,4 @@ fun Project.crabJvm(configure: CargoCompile.() -> Unit) {
             }
         }
     }
-
 }

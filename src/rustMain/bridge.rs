@@ -1,17 +1,22 @@
 pub mod bridge {
+    use std::path::Path;
     use tokenizers::{Encoding, Tokenizer};
 
-    pub fn new_tokenizer_from_pretrained(identifier: &str) -> Result<usize, tokenizers::Error> {
+    pub fn new_tokenizer_from_pretrained<F: AsRef<str>>(
+        identifier: F,
+    ) -> Result<usize, tokenizers::Error> {
         let b = Box::new(Tokenizer::from_pretrained(identifier, None)?);
         Ok(Box::into_raw(b) as usize)
     }
 
-    pub fn new_tokenizer_from_file(filename: &str) -> Result<usize, tokenizers::Error> {
+    pub fn new_tokenizer_from_file<F: AsRef<Path>>(
+        filename: F,
+    ) -> Result<usize, tokenizers::Error> {
         let b = Box::new(Tokenizer::from_file(filename)?);
         Ok(Box::into_raw(b) as usize)
     }
-    
-    pub fn new_tokenizer_from_bytes<P : AsRef<[u8]>>(bytes: P) -> Result<usize, tokenizers::Error> {
+
+    pub fn new_tokenizer_from_bytes<P: AsRef<[u8]>>(bytes: P) -> Result<usize, tokenizers::Error> {
         let b = Box::new(Tokenizer::from_bytes(bytes)?);
         Ok(Box::into_raw(b) as usize)
     }
@@ -49,9 +54,9 @@ pub mod bridge {
             Err(err) => Some(Err(err)),
         }
     }
-    
+
     pub fn release_tokenizer(ptr: usize) {
-        _ = unsafe { Box::from_raw(ptr as *mut Tokenizer) };
+        drop(unsafe { Box::from_raw(ptr as *mut Tokenizer) })
     }
 
     pub fn encoding_get_tokens(ptr: &usize) -> Option<&[String]> {
@@ -64,6 +69,11 @@ pub mod bridge {
         Some(en.get_ids())
     }
 
+    pub fn encoding_get_sequence_ids(ptr: &usize) -> Option<Vec<Option<usize>>> {
+        let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
+        Some(en.get_sequence_ids())
+    }
+
     pub fn encoding_get_len(ptr: &usize) -> Option<usize> {
         let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
         Some(en.len())
@@ -74,8 +84,8 @@ pub mod bridge {
         let en_other = unsafe { (*other_ptr as *mut Encoding).as_ref() }?;
         Some(en == en_other)
     }
-    
+
     pub fn release_encoding(ptr: usize) {
-        _ = unsafe { Box::from_raw(ptr as *mut Encoding) }
+        drop(unsafe { Box::from_raw(ptr as *mut Encoding) })
     }
 }

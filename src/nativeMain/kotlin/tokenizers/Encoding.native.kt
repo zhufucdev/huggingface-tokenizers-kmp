@@ -3,14 +3,23 @@
 package tokenizers
 
 import kotlinx.cinterop.*
-import kotlinx.cinterop.get
-import lib.encoding_get_tokens
-import lib.encoding_get_ids
-import lib.encoding_get_len
-import lib.release_list
-import lib.encoding_eq
-import lib.release_encoding
+import lib.*
+import platform.posix.size_tVar
+import kotlin.Any
+import kotlin.Boolean
+import kotlin.Int
+import kotlin.NullPointerException
+import kotlin.OptIn
+import kotlin.String
+import kotlin.UInt
+import kotlin.ULong
+import kotlin.collections.List
+import kotlin.collections.map
+import kotlin.error
 import kotlin.experimental.ExperimentalNativeApi
+import kotlin.getValue
+import kotlin.lazy
+import kotlin.let
 import kotlin.native.ref.createCleaner
 
 actual class Encoding private constructor(private val inner: CPointer<out CPointed>) {
@@ -38,6 +47,19 @@ actual class Encoding private constructor(private val inner: CPointer<out CPoint
                 } ?: throw NullPointerException()
             } finally {
                 release_list(value.readValue(), sizeOf<UIntVar>().convert())
+            }
+        }
+    }
+
+    actual val sequenceIds: List<ULong?> by lazy {
+        encoding_get_sequence_ids(inner).useContents {
+            try {
+                error_msg?.use { throw NullPointerException(it.toKString()) }
+                value.ptr?.reinterpret<size_tVar>()?.let {
+                    (0 until value.len.toLong()).map { idx -> it[idx].takeIf { it > 0u }?.let { it - 1u }  }
+                } ?: throw NullPointerException()
+            } finally {
+                release_list(value.readValue(), sizeOf<CPointerVar<*>>().convert())
             }
         }
     }
