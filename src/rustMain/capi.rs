@@ -130,6 +130,14 @@ pub extern "C" fn encoding_get_sequence_ids(ptr: *const c_void) -> Result<List> 
 }
 
 #[no_mangle]
+pub extern "C" fn encoding_get_attention_mask(ptr: *const c_void) -> Result<List> {
+    match bridge::encoding_get_attention_mask(&(ptr as usize)) {
+        None => Result::error_empty("Nil encoding pointer."),
+        Some(ids) => Result::ok(ids.into()),
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn encoding_get_len(ptr: *const c_void) -> Result<usize> {
     match bridge::encoding_get_len(&(ptr as usize)) {
         None => Result::error(0, "Nil encoding pointer."),

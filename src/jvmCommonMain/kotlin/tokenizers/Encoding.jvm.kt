@@ -28,6 +28,15 @@ actual class Encoding private constructor(private val ptr: Long) {
         }
     }
 
+    actual val attentionMask: List<UInt> by lazy {
+        try {
+            NativeBridge.encodingGetAttentionMask(ptr)
+                .map { it.toUInt() }
+        } catch (e: RuntimeException) {
+            throw NullPointerException(e.message)
+        }
+    }
+
     actual val size: Int by lazy {
         try {
             NativeBridge.encodingGetLen(ptr).toInt()

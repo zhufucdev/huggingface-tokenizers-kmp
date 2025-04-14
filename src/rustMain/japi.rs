@@ -231,6 +231,33 @@ pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetSequenceIds(
 }
 
 #[no_mangle]
+pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetAttentionMask(
+    mut env: JNIEnv,
+    _: JClass,
+    ptr: jlong,
+) -> jintArray {
+    match bridge::encoding_get_attention_mask(&(ptr as usize)) {
+        None => {
+            env.throw("Null tokenizer pointer.").unwrap();
+            0 as jlongArray
+        }
+        Some(ids) => {
+            let array = env.new_int_array(ids.len() as jsize).unwrap();
+            env.set_int_array_region(
+                &array,
+                0,
+                ids.into_iter()
+                    .map(|o| *o as jint)
+                    .collect::<Vec<jint>>()
+                    .as_slice(),
+            )
+            .unwrap();
+            array.into_raw()
+        }
+    }
+}
+
+#[no_mangle]
 pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetLen(
     mut env: JNIEnv,
     _: JClass,

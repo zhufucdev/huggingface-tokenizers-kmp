@@ -18,6 +18,7 @@ class EncodingTest {
         assertEquals(5, en.size, "Mismatching encoding length")
         assertContentEquals(listOf(101u, 4403u, 1175u, 106u, 102u), en.ids, "Mismatching tokens")
         assertContentEquals(listOf(null, 0u, 0u, 0u, null), en.sequenceIds, "Mismatching sequence ids")
+        assertContentEquals(listOf(1u, 1u, 1u, 1u, 1u), en.attentionMask, "Mismatching attention mask.")
     }
 
     @Test

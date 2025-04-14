@@ -73,6 +73,11 @@ pub mod bridge {
         let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
         Some(en.get_sequence_ids())
     }
+    
+    pub fn encoding_get_attention_mask(ptr: &usize) -> Option<&[u32]> {
+        let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
+        Some(en.get_attention_mask())
+    }
 
     pub fn encoding_get_len(ptr: &usize) -> Option<usize> {
         let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
