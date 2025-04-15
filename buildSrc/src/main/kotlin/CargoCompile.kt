@@ -104,16 +104,30 @@ abstract class CargoCompile : DefaultTask() {
     val libPath = buildRoot.map { File(it, "release") }
 
     /**
+     * Product static library. To use this property, specify the [libNameProperty] first.
+     *
+     * Example: `$projectRoot/build/target/aarch-apple-darwin/release/libcoolname.a`
+     */
+    @OutputFile
+    val staticLinkBinary =
+        libPath.zip(konanTargetProperty.zip(libNameProperty) { k, l -> k to l }) { product, (konan, libName) ->
+            File(
+                product,
+                "${konan.family.staticPrefix}${libName}.${konan.family.staticSuffix}"
+            )
+        }
+
+    /**
      * Product dynamic library. To use this property, specify the [libNameProperty] first.
      *
      * Example: `$projectRoot/build/target/aarch-apple-darwin/release/libcoolname.dylib`
      */
     @OutputFile
-    val binaryFile =
+    val dynamicLinkBinary =
         libPath.zip(konanTargetProperty.zip(libNameProperty) { k, l -> k to l }) { product, (konan, libName) ->
             File(
                 product,
-                "${konan.family.staticPrefix}${libName}.${konan.family.staticSuffix}"
+                "${konan.family.dynamicPrefix}${libName}.${konan.family.dynamicSuffix}"
             )
         }
 

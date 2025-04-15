@@ -6,7 +6,7 @@ edition = "2021"
 
 [lib]
 name = "hgtk"
-crate-type = ["staticlib"]
+crate-type = ["staticlib", "cdylib"]
 path = "src/rustMain/lib.rs"
 
 [dependencies]
