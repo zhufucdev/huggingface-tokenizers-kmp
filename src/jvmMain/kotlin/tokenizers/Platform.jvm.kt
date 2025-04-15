@@ -36,7 +36,7 @@ private fun getCopy(): File {
 @Suppress("UnsafeDynamicallyLoadedCode")
 actual fun platformLoadLib() {
     try {
-        System.loadLibrary("vectoria")
+        System.loadLibrary(LIB_NAME)
     } catch (_: UnsatisfiedLinkError) {
         val copy = getCopy()
         try {
