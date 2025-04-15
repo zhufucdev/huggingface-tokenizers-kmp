@@ -113,7 +113,7 @@ abstract class CargoCompile : DefaultTask() {
         libPath.zip(konanTargetProperty.zip(libNameProperty) { k, l -> k to l }) { product, (konan, libName) ->
             File(
                 product,
-                "${konan.family.dynamicPrefix}${libName}.${konan.family.dynamicSuffix}"
+                "${konan.family.staticPrefix}${libName}.${konan.family.staticSuffix}"
             )
         }
 

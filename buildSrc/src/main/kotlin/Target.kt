@@ -78,10 +78,7 @@ fun KotlinNativeTarget.crabNative(configure: CargoCompile.() -> Unit): RustSetup
 
     binaries {
         all {
-            linkerOpts.add(setupResult.build.binaryFile.get().path)
-        }
-        executable {
-            entryPoint = "main"
+            linkerOpts(setupResult.build.binaryFile.get().path)
         }
     }
 
