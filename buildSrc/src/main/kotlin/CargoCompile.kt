@@ -21,7 +21,7 @@ abstract class CargoCompile : DefaultTask() {
     protected abstract val crossProperty: Property<Boolean>
 
     @get:Optional
-    @get:InputFiles
+    @get:InputDirectory
     protected abstract val sourceDirProperty: Property<File>
 
     @get:Internal

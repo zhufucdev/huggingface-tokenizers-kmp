@@ -3,7 +3,6 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-import org.jetbrains.kotlin.konan.target.Family
 import java.io.File
 
 abstract class DefFileTask : DefaultTask() {
@@ -16,12 +15,6 @@ abstract class DefFileTask : DefaultTask() {
         set(value) {
             outputFileProperty.set(value)
         }
-
-    private val Family.properName get() = when(this) {
-        Family.OSX ->  "macos"
-        Family.MINGW -> "windows"
-        else -> name.lowercase()
-    }
 
     @TaskAction
     fun write() {
