@@ -22,63 +22,53 @@ import kotlin.let
 import kotlin.native.ref.createCleaner
 import kotlin.takeIf
 
-actual class Encoding private constructor(private val inner: CPointer<out CPointed>) {
-    private inline fun <reified T : CVariable, R> Result_List.readListResult(map: (T) -> R): List<R> =
-        try {
-            error_msg?.use { throw NullPointerException(it.toKString()) }
-            value.ptr?.reinterpret<T>()?.let {
-                (0 until value.len.toLong()).map { idx -> map(it[idx]) }
-            } ?: throw NullPointerException()
-        } finally {
-            release_list(value.readValue(), sizeOf<T>().convert())
-        }
-
+actual class Encoding internal constructor(private val inner: StableRef<CPointed>) {
     actual val tokens: List<String> by lazy {
-        encoding_get_tokens(inner).useContents {
-            readListResult<CPointerVarOf<CPointer<ByteVar>>, String> {
-                it.value?.toKString() ?: throw NullPointerException()
+        encoding_get_tokens(inner.asCPointer()).useContents {
+            readListResult<CPointerVarOf<CPointer<ByteVar>>, String> { token ->
+                token.value?.use { it.toKString() } ?: throw NullPointerException()
             }
         }
     }
 
     actual val ids: List<UInt> by lazy {
-        encoding_get_ids(inner).useContents {
+        encoding_get_ids(inner.asCPointer()).useContents {
             readListResult<UIntVar, UInt> { it.value }
         }
     }
 
     actual val sequenceIds: List<ULong?> by lazy {
-        encoding_get_sequence_ids(inner).useContents {
-            readListResult<size_tVar, ULong?> { it.value.takeIf { it > 0u }?.let { it - 1u } }
+        encoding_get_sequence_ids(inner.asCPointer()).useContents {
+            readListResult<size_tVar, ULong?> { v -> v.value.takeIf { it > 0u }?.let { it - 1u } }
         }
     }
 
     actual val attentionMask: List<UInt> by lazy {
-        encoding_get_attention_mask(inner).useContents {
+        encoding_get_attention_mask(inner.asCPointer()).useContents {
             readListResult<UIntVar, UInt> { it.value }
         }
     }
 
     actual val size: Int by lazy {
-        encoding_get_len(inner).useContents {
+        encoding_get_len(inner.asCPointer()).useContents {
             error_msg?.use { throw NullPointerException(it.toKString()) }
             value.toInt()
         }
     }
 
     actual override fun equals(other: Any?): Boolean =
-        other is Encoding && encoding_eq(inner, other.inner).useContents {
+        other is Encoding && encoding_eq(inner.asCPointer(), other.inner.asCPointer()).useContents {
             error_msg?.use { error(it.toKString()) }
             value
         }
 
     @OptIn(ExperimentalNativeApi::class)
     private val cleaner = createCleaner(inner) {
-        release_encoding(it)
+        release_encoding(it.asCPointer())
     }
 
     companion object {
-        internal fun fromC(ptr: CPointer<out CPointed>): Encoding = Encoding(ptr)
+        internal fun fromC(ptr: CPointer<out CPointed>): Encoding = Encoding(ptr.asStableRef())
     }
 
     actual override fun hashCode(): Int {

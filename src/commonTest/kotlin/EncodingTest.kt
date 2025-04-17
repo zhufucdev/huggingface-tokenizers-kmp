@@ -37,6 +37,6 @@ class EncodingTest {
         assertEquals(a, b)
 
         val c = tokenizer.encode(text.replace(".", "?"))
-        assertNotEquals(a, c, "Inequality failed")
+        assertNotEquals(a, c, "Equality failed")
     }
 }

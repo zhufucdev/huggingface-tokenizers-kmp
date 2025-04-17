@@ -11,14 +11,17 @@ import tokenizers.Tokenizer
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
-private const val tokenizerUrl = "https://huggingface.co/google-bert/bert-base-cased/resolve/main/tokenizer.json?download=true"
+private const val tokenizerUrl =
+    "https://huggingface.co/google-bert/bert-base-cased/resolve/main/tokenizer.json?download=true"
 
 class InitializationTest {
     val client = newHttpClient()
 
     @Test
     fun from_pretrained() {
-        Tokenizer.fromPretrained(MODEL_ID)
+        run {
+            Tokenizer.fromPretrained(MODEL_ID)
+        }
     }
 
     @Test

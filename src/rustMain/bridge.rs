@@ -21,12 +21,12 @@ pub mod bridge {
         Ok(Box::into_raw(b) as usize)
     }
 
-    pub fn tokenizer_encode(
+    pub unsafe fn tokenizer_encode(
         ptr: usize,
         input: &str,
         add_special_tokens: bool,
     ) -> Option<Result<usize, tokenizers::Error>> {
-        let tk = unsafe { (ptr as *mut Tokenizer).as_mut() }?;
+        let tk = (ptr as *mut Tokenizer).as_mut()?;
         match tk.encode(input, add_special_tokens) {
             Ok(encoding) => {
                 let b = Box::new(encoding);
@@ -37,7 +37,7 @@ pub mod bridge {
         }
     }
 
-    pub fn tokenizer_encode_batch<'s, E>(
+    pub unsafe fn tokenizer_encode_batch<'s, E>(
         ptr: usize,
         inputs: Vec<E>,
         add_special_tokens: bool,
@@ -45,7 +45,7 @@ pub mod bridge {
     where
         E: Into<tokenizers::EncodeInput<'s>> + Send,
     {
-        let tk = unsafe { (ptr as *mut Tokenizer).as_mut() }?;
+        let tk = (ptr as *mut Tokenizer).as_mut()?;
         match tk.encode_batch(inputs, add_special_tokens) {
             Ok(encodings) => Some(Ok(encodings
                 .into_iter()
@@ -55,42 +55,42 @@ pub mod bridge {
         }
     }
 
-    pub fn release_tokenizer(ptr: usize) {
-        drop(unsafe { Box::from_raw(ptr as *mut Tokenizer) })
+    pub unsafe fn release_tokenizer(ptr: usize) {
+        drop(Box::from_raw(ptr as *mut Tokenizer))
     }
 
-    pub fn encoding_get_tokens(ptr: &usize) -> Option<&[String]> {
-        let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
+    pub unsafe fn encoding_get_tokens(ptr: &usize) -> Option<&[String]> {
+        let en = (*ptr as *mut Encoding).as_ref()?;
         Some(en.get_tokens())
     }
 
-    pub fn encoding_get_ids(ptr: &usize) -> Option<&[u32]> {
-        let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
+    pub unsafe fn encoding_get_ids(ptr: &usize) -> Option<&[u32]> {
+        let en = (*ptr as *mut Encoding).as_ref()?;
         Some(en.get_ids())
     }
 
-    pub fn encoding_get_sequence_ids(ptr: &usize) -> Option<Vec<Option<usize>>> {
-        let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
+    pub unsafe fn encoding_get_sequence_ids(ptr: &usize) -> Option<Vec<Option<usize>>> {
+        let en = (*ptr as *mut Encoding).as_ref()?;
         Some(en.get_sequence_ids())
     }
-    
-    pub fn encoding_get_attention_mask(ptr: &usize) -> Option<&[u32]> {
-        let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
+
+    pub unsafe fn encoding_get_attention_mask(ptr: &usize) -> Option<&[u32]> {
+        let en = (*ptr as *mut Encoding).as_ref()?;
         Some(en.get_attention_mask())
     }
 
-    pub fn encoding_get_len(ptr: &usize) -> Option<usize> {
-        let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
+    pub unsafe fn encoding_get_len(ptr: &usize) -> Option<usize> {
+        let en = (*ptr as *mut Encoding).as_ref()?;
         Some(en.len())
     }
 
-    pub fn encoding_eq(ptr: &usize, other_ptr: &usize) -> Option<bool> {
-        let en = unsafe { (*ptr as *mut Encoding).as_ref() }?;
+    pub unsafe fn encoding_eq(ptr: &usize, other_ptr: &usize) -> Option<bool> {
+        let en = (*ptr as *mut Encoding).as_ref()?;
         let en_other = unsafe { (*other_ptr as *mut Encoding).as_ref() }?;
         Some(en == en_other)
     }
 
-    pub fn release_encoding(ptr: usize) {
-        drop(unsafe { Box::from_raw(ptr as *mut Encoding) })
+    pub unsafe fn release_encoding(ptr: usize) {
+        drop(Box::from_raw(ptr as *mut Encoding))
     }
 }

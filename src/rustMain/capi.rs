@@ -51,16 +51,14 @@ pub unsafe extern "C" fn new_tokenizer_from_bytes(
 }
 
 #[no_mangle]
-pub extern "C" fn tokenizer_encode(
+pub unsafe extern "C" fn tokenizer_encode(
     ptr: *const c_void,
     input: *const c_char,
     add_special_tokens: bool,
 ) -> Result<*const c_void> {
-    let input = unsafe {
-        CStr::from_ptr(input)
-            .to_str()
-            .expect("FFI string conversion failed.")
-    };
+    let input = CStr::from_ptr(input)
+        .to_str()
+        .expect("FFI string conversion failed.");
     match bridge::tokenizer_encode(ptr as usize, input, add_special_tokens) {
         None => Result::error_nilptr("Nil tokenizer pointer."),
         Some(Ok(ptr)) => Result::ok(ptr as *const c_void),
@@ -102,7 +100,7 @@ pub unsafe extern "C" fn encoding_get_tokens(ptr: *const c_void) -> Result<List>
         None => Result::error_empty("Nil encoding pointer."),
         Some(tokens) => Result::ok(
             tokens
-                .iter()
+                .into_iter()
                 .map(|token| CString::new(token.as_str()).unwrap().into_raw() as *const c_char)
                 .collect(),
         ),
@@ -110,7 +108,7 @@ pub unsafe extern "C" fn encoding_get_tokens(ptr: *const c_void) -> Result<List>
 }
 
 #[no_mangle]
-pub extern "C" fn encoding_get_ids(ptr: *const c_void) -> Result<List> {
+pub unsafe extern "C" fn encoding_get_ids(ptr: *const c_void) -> Result<List> {
     match bridge::encoding_get_ids(&(ptr as usize)) {
         None => Result::error_empty("Nil encoding pointer."),
         Some(ids) => Result::ok(ids.into()),
@@ -118,7 +116,7 @@ pub extern "C" fn encoding_get_ids(ptr: *const c_void) -> Result<List> {
 }
 
 #[no_mangle]
-pub extern "C" fn encoding_get_sequence_ids(ptr: *const c_void) -> Result<List> {
+pub unsafe extern "C" fn encoding_get_sequence_ids(ptr: *const c_void) -> Result<List> {
     match bridge::encoding_get_sequence_ids(&(ptr as usize)) {
         None => Result::error_empty("Nil encoding pointer."),
         Some(ids) => Result::ok(
@@ -130,7 +128,7 @@ pub extern "C" fn encoding_get_sequence_ids(ptr: *const c_void) -> Result<List> 
 }
 
 #[no_mangle]
-pub extern "C" fn encoding_get_attention_mask(ptr: *const c_void) -> Result<List> {
+pub unsafe extern "C" fn encoding_get_attention_mask(ptr: *const c_void) -> Result<List> {
     match bridge::encoding_get_attention_mask(&(ptr as usize)) {
         None => Result::error_empty("Nil encoding pointer."),
         Some(ids) => Result::ok(ids.into()),
@@ -138,7 +136,7 @@ pub extern "C" fn encoding_get_attention_mask(ptr: *const c_void) -> Result<List
 }
 
 #[no_mangle]
-pub extern "C" fn encoding_get_len(ptr: *const c_void) -> Result<usize> {
+pub unsafe extern "C" fn encoding_get_len(ptr: *const c_void) -> Result<usize> {
     match bridge::encoding_get_len(&(ptr as usize)) {
         None => Result::error(0, "Nil encoding pointer."),
         Some(len) => Result::ok(len),
@@ -146,7 +144,7 @@ pub extern "C" fn encoding_get_len(ptr: *const c_void) -> Result<usize> {
 }
 
 #[no_mangle]
-pub extern "C" fn encoding_eq(ptr: *const c_void, other_ptr: *const c_void) -> Result<bool> {
+pub unsafe extern "C" fn encoding_eq(ptr: *const c_void, other_ptr: *const c_void) -> Result<bool> {
     match bridge::encoding_eq(&(ptr as usize), &(other_ptr as usize)) {
         None => Result::error(false, "Nil encoding pointer."),
         Some(eq) => Result::ok(eq),
@@ -154,12 +152,12 @@ pub extern "C" fn encoding_eq(ptr: *const c_void, other_ptr: *const c_void) -> R
 }
 
 #[no_mangle]
-pub extern "C" fn release_tokenizer(ptr: *mut c_void) {
+pub unsafe extern "C" fn release_tokenizer(ptr: *mut c_void) {
     bridge::release_tokenizer(ptr as usize)
 }
 
 #[no_mangle]
-pub extern "C" fn release_encoding(ptr: *mut c_void) {
+pub unsafe extern "C" fn release_encoding(ptr: *mut c_void) {
     bridge::release_encoding(ptr as usize)
 }
 
@@ -169,8 +167,8 @@ pub unsafe extern "C" fn release_cstring_ptr(ptr: *mut c_char) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn release_list(list: List, align: usize) {
-    list.dealloc_align(align).unwrap()
+pub unsafe extern "C" fn release_list(list: List, size: usize, align: usize) {
+    list.dealloc_align(size, align).unwrap()
 }
 
 #[repr(C)]
@@ -245,25 +243,28 @@ impl List {
         Ok(())
     }
 
-    pub unsafe fn dealloc_align(self, align: usize) -> std::result::Result<(), LayoutError> {
+    pub unsafe fn dealloc_align(self, size: usize, align: usize) -> std::result::Result<(), LayoutError> {
         if !self.ptr.is_null() {
             alloc::dealloc(
                 self.ptr as *mut u8,
-                Layout::from_size_align(self.len, align)?,
+                Layout::from_size_align(self.len * size, align)?,
             );
         }
         Ok(())
     }
 
     fn layout<T>(&self) -> std::result::Result<Layout, LayoutError> {
-        Layout::from_size_align(self.len, size_of::<T>())
+        Layout::array::<T>(self.len)
     }
 }
 
 impl List {
     pub unsafe fn from_vec<T>(vec: Vec<T>) -> Self {
+        if vec.is_empty() {
+            return Self::empty();
+        }
         let len = vec.len();
-        let layout = Layout::from_size_align(len, size_of::<T>()).unwrap();
+        let layout = Layout::array::<T>(len).unwrap();
         let span = alloc::alloc_zeroed(layout) as *mut T;
         for (idx, ele) in vec.into_iter().enumerate() {
             span.offset(idx as isize).write(ele)
@@ -284,7 +285,10 @@ impl<T> FromIterator<T> for List {
 
 impl<T: Clone> From<&[T]> for List {
     fn from(value: &[T]) -> Self {
-        let layout = Layout::from_size_align(value.len(), size_of::<T>()).unwrap();
+        if value.is_empty() {
+            return Self::empty();
+        }
+        let layout = Layout::array::<T>(value.len()).unwrap();
         let span = unsafe { alloc::alloc_zeroed(layout) as *mut T };
         for (idx, ele) in value.iter().enumerate() {
             let owned = ele.clone();

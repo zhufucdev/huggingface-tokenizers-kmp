@@ -80,7 +80,7 @@ pub extern "system" fn Java_tokenizers_NativeBridge_newTokenizerFromBytes(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_tokenizers_NativeBridge_tokenizerEncode(
+pub unsafe extern "system" fn Java_tokenizers_NativeBridge_tokenizerEncode(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
@@ -105,7 +105,7 @@ pub extern "system" fn Java_tokenizers_NativeBridge_tokenizerEncode(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_tokenizers_NativeBridge_tokenizerEncodeBatch(
+pub unsafe extern "system" fn Java_tokenizers_NativeBridge_tokenizerEncodeBatch(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
@@ -151,7 +151,7 @@ pub extern "system" fn Java_tokenizers_NativeBridge_tokenizerEncodeBatch(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetTokens(
+pub unsafe extern "system" fn Java_tokenizers_NativeBridge_encodingGetTokens(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
@@ -177,7 +177,7 @@ pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetTokens(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetIds(
+pub unsafe extern "system" fn Java_tokenizers_NativeBridge_encodingGetIds(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
@@ -204,7 +204,7 @@ pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetIds(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetSequenceIds(
+pub unsafe extern "system" fn Java_tokenizers_NativeBridge_encodingGetSequenceIds(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
@@ -231,7 +231,7 @@ pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetSequenceIds(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetAttentionMask(
+pub unsafe extern "system" fn Java_tokenizers_NativeBridge_encodingGetAttentionMask(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
@@ -258,7 +258,7 @@ pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetAttentionMask(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetLen(
+pub unsafe extern "system" fn Java_tokenizers_NativeBridge_encodingGetLen(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
@@ -273,7 +273,7 @@ pub extern "system" fn Java_tokenizers_NativeBridge_encodingGetLen(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_tokenizers_NativeBridge_encodingEq(
+pub unsafe extern "system" fn Java_tokenizers_NativeBridge_encodingEq(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
@@ -295,7 +295,7 @@ pub extern "system" fn Java_tokenizers_NativeBridge_encodingEq(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_tokenizers_NativeBridge_releaseTokenizer(
+pub unsafe extern "system" fn Java_tokenizers_NativeBridge_releaseTokenizer(
     _: JNIEnv,
     _: JClass,
     ptr: jlong,
@@ -304,7 +304,7 @@ pub extern "system" fn Java_tokenizers_NativeBridge_releaseTokenizer(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_tokenizers_NativeBridge_releaseEncoding(
+pub unsafe extern "system" fn Java_tokenizers_NativeBridge_releaseEncoding(
     _: JNIEnv,
     _: JClass,
     ptr: jlong,
