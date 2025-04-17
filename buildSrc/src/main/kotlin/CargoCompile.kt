@@ -1,6 +1,7 @@
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
+import org.gradle.work.Incremental
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.io.File
 
@@ -22,6 +23,7 @@ abstract class CargoCompile : DefaultTask() {
 
     @get:Optional
     @get:InputDirectory
+    @get:Incremental
     protected abstract val sourceDirProperty: Property<File>
 
     @get:Internal

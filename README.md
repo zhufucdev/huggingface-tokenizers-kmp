@@ -33,7 +33,7 @@ kotlin {
 **libs.versions.toml**
 ```toml
 [versions]
-hgtk = "0.0.6"
+hgtk = "0.0.7"
 
 [libraries]
 hgtk-core = { module = "com.zhufucdev.hgtk:core", version.ref = "hgtk" }
