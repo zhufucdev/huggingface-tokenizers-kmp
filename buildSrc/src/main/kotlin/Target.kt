@@ -47,7 +47,7 @@ internal fun setupRustTask(
 
     val prepareToolchain =
         project.tasks.registerSafe("prepareRustToolchain${taskName}") {
-            doLast {
+            doFirst {
                 project.rustupAddTarget(platform)
             }
         }
@@ -119,7 +119,7 @@ fun Project.crabAndroid(configure: CargoCompile.() -> Unit) {
     val copyAbiJniLibs = androidSetups.map { setup ->
         val copy = tasks.register("copy${setup.abi.uppercaseFirstChar()}JniLibs", Copy::class) {
             dependsOn(setup.crab.build)
-            from(setup.crab.build.staticLinkBinary)
+            from(setup.crab.build.dynamicLinkBinary)
             into(buildJniLibsDir.map { it.file(setup.abi) })
         }
         setup.crab.build.finalizedBy(copy)

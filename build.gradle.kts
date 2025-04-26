@@ -26,7 +26,7 @@ crabAndroid {
 
 crabJvm {
     libName = Library.name
-    cross = true
+    cross = !konanTarget.family.isAppleFamily
 }
 
 kotlin {
