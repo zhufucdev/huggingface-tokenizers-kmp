@@ -1,6 +1,6 @@
 pub mod bridge {
     use std::path::Path;
-    use tokenizers::{Encoding, Tokenizer};
+    use tokenizers::{truncate_encodings, Encoding, Tokenizer};
 
     pub fn new_tokenizer_from_pretrained<F: AsRef<str>>(
         identifier: F,
@@ -59,24 +59,24 @@ pub mod bridge {
         drop(Box::from_raw(ptr as *mut Tokenizer))
     }
 
-    pub unsafe fn encoding_get_tokens(ptr: &usize) -> Option<&[String]> {
+    pub unsafe fn encoding_get_token_at(ptr: &usize, index: usize) -> Option<&String> {
         let en = (*ptr as *mut Encoding).as_ref()?;
-        Some(en.get_tokens())
+        Some(&en.get_tokens()[index])
     }
 
-    pub unsafe fn encoding_get_ids(ptr: &usize) -> Option<&[u32]> {
+    pub unsafe fn encoding_get_id_at(ptr: &usize, index: usize) -> Option<u32> {
         let en = (*ptr as *mut Encoding).as_ref()?;
-        Some(en.get_ids())
+        Some(en.get_ids()[index])
     }
 
-    pub unsafe fn encoding_get_sequence_ids(ptr: &usize) -> Option<Vec<Option<usize>>> {
+    pub unsafe fn encoding_get_sequence_id_at(ptr: &usize, index: usize) -> Option<Option<usize>> {
         let en = (*ptr as *mut Encoding).as_ref()?;
-        Some(en.get_sequence_ids())
+        Some(en.get_sequence_ids()[index])
     }
 
-    pub unsafe fn encoding_get_attention_mask(ptr: &usize) -> Option<&[u32]> {
+    pub unsafe fn encoding_get_attention_mask_at(ptr: &usize, index: usize) -> Option<u32> {
         let en = (*ptr as *mut Encoding).as_ref()?;
-        Some(en.get_attention_mask())
+        Some(en.get_attention_mask()[index])
     }
 
     pub unsafe fn encoding_get_len(ptr: &usize) -> Option<usize> {

@@ -95,43 +95,41 @@ pub unsafe extern "C" fn tokenizer_encode_batch(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn encoding_get_tokens(ptr: *const c_void) -> Result<List> {
-    match bridge::encoding_get_tokens(&(ptr as usize)) {
-        None => Result::error_empty("Nil encoding pointer."),
-        Some(tokens) => Result::ok(
-            tokens
-                .into_iter()
-                .map(|token| CString::new(token.as_str()).unwrap().into_raw() as *const c_char)
-                .collect(),
-        ),
+pub unsafe extern "C" fn encoding_get_token_at(
+    ptr: *const c_void,
+    index: usize,
+) -> Result<*const c_char> {
+    match bridge::encoding_get_token_at(&(ptr as usize), index) {
+        None => Result::error_nilptr("Nil encoding pointer."),
+        Some(token) => match CString::new(token.as_str()) {
+            Ok(str) => Result::ok(CString::into_raw(str)),
+            Err(err) => Result::error_nilptr(format!("Rust-to-C string conversion failed: {err}")),
+        },
     }
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn encoding_get_ids(ptr: *const c_void) -> Result<List> {
-    match bridge::encoding_get_ids(&(ptr as usize)) {
-        None => Result::error_empty("Nil encoding pointer."),
+pub unsafe extern "C" fn encoding_get_id_at(ptr: *const c_void, index: usize) -> Result<u32> {
+    match bridge::encoding_get_id_at(&(ptr as usize), index) {
+        None => Result::error_default("Nil encoding pointer."),
         Some(ids) => Result::ok(ids.into()),
     }
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn encoding_get_sequence_ids(ptr: *const c_void) -> Result<List> {
-    match bridge::encoding_get_sequence_ids(&(ptr as usize)) {
-        None => Result::error_empty("Nil encoding pointer."),
-        Some(ids) => Result::ok(
-            ids.into_iter()
-                .map(|o| o.map(|id| id + 1).unwrap_or(0))
-                .collect(),
-        ),
+pub unsafe extern "C" fn encoding_get_sequence_id_at(ptr: *const c_void, index: usize) -> Result<usize> {
+    match bridge::encoding_get_sequence_id_at(&(ptr as usize), index) {
+        None => Result::error_default("Nil encoding pointer."),
+        Some(Some(id)) => Result::ok(id + 1),
+        Some(None) => Result::ok(0)
     }
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn encoding_get_attention_mask(ptr: *const c_void) -> Result<List> {
-    match bridge::encoding_get_attention_mask(&(ptr as usize)) {
-        None => Result::error_empty("Nil encoding pointer."),
-        Some(ids) => Result::ok(ids.into()),
+pub unsafe extern "C" fn encoding_get_attention_mask_at(ptr: *const c_void, index: usize) -> Result<u32> {
+    match bridge::encoding_get_attention_mask_at(&(ptr as usize), index) {
+        None => Result::error_default("Nil encoding pointer."),
+        Some(id) => Result::ok(id),
     }
 }
 
@@ -192,6 +190,10 @@ impl<T> Result<T> {
             error_msg: msg.into_raw(),
         }
     }
+    
+    pub fn error_default<E: Debug>(error: E) -> Self where T: Default {
+        Self::error(T::default(), error)
+    }
 
     pub fn error_to_str<E: ToString>(default: T, error: E) -> Self {
         let msg = CString::new(error.to_string()).unwrap();
@@ -243,7 +245,11 @@ impl List {
         Ok(())
     }
 
-    pub unsafe fn dealloc_align(self, size: usize, align: usize) -> std::result::Result<(), LayoutError> {
+    pub unsafe fn dealloc_align(
+        self,
+        size: usize,
+        align: usize,
+    ) -> std::result::Result<(), LayoutError> {
         if !self.ptr.is_null() {
             alloc::dealloc(
                 self.ptr as *mut u8,

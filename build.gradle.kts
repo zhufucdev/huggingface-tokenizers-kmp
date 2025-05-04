@@ -145,7 +145,7 @@ mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
     signAllPublications()
 
-    coordinates(Library.namespace, "core", "0.0.8")
+    coordinates(Library.namespace, "core", "0.0.9")
     pom {
         name = "Hugging Face Tokenizers KMP"
         description = "Kotlin binding to the Hugging Face tokenizers, as a Multiplatform library."

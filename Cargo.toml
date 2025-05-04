@@ -6,12 +6,17 @@ edition = "2021"
 
 [lib]
 name = "hgtk"
-crate-type = ["staticlib"]
+crate-type = ["staticlib", "cdylib"]
 path = "src/rustMain/lib.rs"
 
 [dependencies]
 jni = "0.21.1"
 tokenizers = { version = "0.21.1", default-features = false, features = ["http", "esaxx_fast", "fancy-regex"] }
 
+[workspace]
+resolver = "2"
+members = ["apigen"]
+
 [patch.crates-io]
 tokenizers = { path = "./tokenizers/tokenizers" }
+apigen = { path = "./apigen" }

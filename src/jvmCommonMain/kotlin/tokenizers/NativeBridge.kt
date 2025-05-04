@@ -15,13 +15,13 @@ internal object NativeBridge {
 
     external fun tokenizerEncodeBatch(ptr: Long, inputs: Array<String>, addSpecialTokens: Boolean): LongArray
 
-    external fun encodingGetTokens(ptr: Long): Array<String>
+    external fun encodingGetTokenAt(ptr: Long, index: Int): String
 
-    external fun encodingGetIds(ptr: Long): IntArray
+    external fun encodingGetIdAt(ptr: Long, index: Int): Int
 
-    external fun encodingGetSequenceIds(ptr: Long): LongArray
+    external fun encodingGetSequenceIdAt(ptr: Long, index: Int): Long
 
-    external fun encodingGetAttentionMask(ptr: Long): IntArray
+    external fun encodingGetAttentionMaskAt(ptr: Long, index: Int): Int
 
     external fun encodingGetLen(ptr: Long): Int
 

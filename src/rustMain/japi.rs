@@ -1,7 +1,9 @@
 use crate::bridge::bridge;
 use crate::capi::plus;
 use jni::objects::{JByteArray, JClass, JObjectArray, JString};
-use jni::sys::{jboolean, jint, jintArray, jlong, jlongArray, jobjectArray, jsize};
+use jni::sys::{
+    jboolean, jint, jlong, jlongArray, jobjectArray, jsize, jstring,
+};
 use jni::JNIEnv;
 
 #[no_mangle]
@@ -151,109 +153,67 @@ pub unsafe extern "system" fn Java_tokenizers_NativeBridge_tokenizerEncodeBatch(
 }
 
 #[no_mangle]
-pub unsafe extern "system" fn Java_tokenizers_NativeBridge_encodingGetTokens(
+pub unsafe extern "system" fn Java_tokenizers_NativeBridge_encodingGetTokenAt(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
-) -> jobjectArray {
-    match bridge::encoding_get_tokens(&(ptr as usize)) {
+    index: jint,
+) -> jstring {
+    match bridge::encoding_get_token_at(&(ptr as usize), index as usize) {
         None => {
             env.throw("Null encoding pointer.").unwrap();
             0 as jobjectArray
         }
-        Some(tokens) => {
-            let string_class = env.find_class("java/lang/String").unwrap();
-            let empty_string = env.new_string("").unwrap();
-            let array = env
-                .new_object_array(tokens.len() as jsize, string_class, empty_string)
-                .unwrap();
-            for (idx, ele) in tokens.iter().enumerate() {
-                env.set_object_array_element(&array, idx as jsize, env.new_string(ele).unwrap())
-                    .unwrap()
-            }
-            array.into_raw()
-        }
+        Some(token) => env.new_string(token).unwrap().into_raw(),
     }
 }
 
 #[no_mangle]
-pub unsafe extern "system" fn Java_tokenizers_NativeBridge_encodingGetIds(
+pub unsafe extern "system" fn Java_tokenizers_NativeBridge_encodingGetIdAt(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
-) -> jintArray {
-    match bridge::encoding_get_ids(&(ptr as usize)) {
+    index: jint,
+) -> jint {
+    match bridge::encoding_get_id_at(&(ptr as usize), index as usize) {
         None => {
             env.throw("Null encoding pointer.").unwrap();
-            0 as jintArray
+            0
         }
-        Some(ids) => {
-            let array = env.new_int_array(ids.len() as jsize).unwrap();
-            env.set_int_array_region(
-                &array,
-                0,
-                ids.iter()
-                    .map(|id| *id as jint)
-                    .collect::<Vec<jint>>()
-                    .as_slice(),
-            )
-            .unwrap();
-            array.into_raw()
-        }
+        Some(id) => id as jint,
     }
 }
 
 #[no_mangle]
-pub unsafe extern "system" fn Java_tokenizers_NativeBridge_encodingGetSequenceIds(
+pub unsafe extern "system" fn Java_tokenizers_NativeBridge_encodingGetSequenceIdAt(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
-) -> jlongArray {
-    match bridge::encoding_get_sequence_ids(&(ptr as usize)) {
+    index: jint,
+) -> jlong {
+    match bridge::encoding_get_sequence_id_at(&(ptr as usize), index as usize) {
         None => {
             env.throw("Null tokenizer pointer.").unwrap();
-            0 as jlongArray
+            0
         }
-        Some(ids) => {
-            let array = env.new_long_array(ids.len() as jsize).unwrap();
-            env.set_long_array_region(
-                &array,
-                0,
-                ids.into_iter()
-                    .map(|o| o.map(|id| (id + 1) as jlong).unwrap_or(0))
-                    .collect::<Vec<jlong>>()
-                    .as_slice(),
-            )
-            .unwrap();
-            array.into_raw()
-        }
+        Some(Some(id)) => (id + 1) as jlong,
+        Some(None) => 0,
     }
 }
 
 #[no_mangle]
-pub unsafe extern "system" fn Java_tokenizers_NativeBridge_encodingGetAttentionMask(
+pub unsafe extern "system" fn Java_tokenizers_NativeBridge_encodingGetAttentionMaskAt(
     mut env: JNIEnv,
     _: JClass,
     ptr: jlong,
-) -> jintArray {
-    match bridge::encoding_get_attention_mask(&(ptr as usize)) {
+    index: jint,
+) -> jint {
+    match bridge::encoding_get_attention_mask_at(&(ptr as usize), index as usize) {
         None => {
             env.throw("Null tokenizer pointer.").unwrap();
-            0 as jlongArray
+            0
         }
-        Some(ids) => {
-            let array = env.new_int_array(ids.len() as jsize).unwrap();
-            env.set_int_array_region(
-                &array,
-                0,
-                ids.into_iter()
-                    .map(|o| *o as jint)
-                    .collect::<Vec<jint>>()
-                    .as_slice(),
-            )
-            .unwrap();
-            array.into_raw()
-        }
+        Some(id) => id as jint,
     }
 }
 

@@ -11,6 +11,7 @@ import kotlin.Int
 import kotlin.NullPointerException
 import kotlin.OptIn
 import kotlin.String
+import kotlin.TODO
 import kotlin.UInt
 import kotlin.ULong
 import kotlin.collections.List
@@ -24,37 +25,57 @@ import kotlin.takeIf
 
 actual class Encoding internal constructor(private val inner: StableRef<CPointed>) {
     actual val tokens: List<String> by lazy {
-        encoding_get_tokens(inner.asCPointer()).useContents {
-            readListResult<CPointerVarOf<CPointer<ByteVar>>, String> { token ->
-                token.value?.use { it.toKString() } ?: throw NullPointerException()
-            }
+        object : DelegatedList<String>(size) {
+            override fun getSafe(index: Int): String =
+                encoding_get_token_at(inner.asCPointer(), index.convert()).useContents {
+                    error_msg?.use { throw NullPointerException(it.toKString()) }
+                    value?.use { it.toKString() }
+                    throw NullPointerException(ERROR_EMPTY_RESULT)
+                }
         }
     }
 
     actual val ids: List<UInt> by lazy {
-        encoding_get_ids(inner.asCPointer()).useContents {
-            readListResult<UIntVar, UInt> { it.value }
+        object : DelegatedList<UInt>(size) {
+            override fun getSafe(index: Int): UInt =
+                encoding_get_id_at(inner.asCPointer(), index.convert()).useContents {
+                    error_msg?.use { throw NullPointerException(it.toKString()) }
+                    value
+                }
         }
     }
 
     actual val sequenceIds: List<ULong?> by lazy {
-        encoding_get_sequence_ids(inner.asCPointer()).useContents {
-            readListResult<size_tVar, ULong?> { v -> v.value.takeIf { it > 0u }?.let { it - 1u } }
+        object : DelegatedList<ULong?>(size) {
+            override fun getSafe(index: Int): ULong? =
+                encoding_get_sequence_id_at(inner.asCPointer(), index.convert()).useContents {
+                    error_msg?.use { throw NullPointerException(it.toKString()) }
+                    value.let {
+                        if (it > 0u) {
+                            it - 1u
+                        } else {
+                            null
+                        }
+                    }
+                }
         }
     }
 
     actual val attentionMask: List<UInt> by lazy {
-        encoding_get_attention_mask(inner.asCPointer()).useContents {
-            readListResult<UIntVar, UInt> { it.value }
+        object : DelegatedList<UInt>(size) {
+            override fun getSafe(index: Int): UInt =
+                encoding_get_attention_mask_at(inner.asCPointer(), index.convert()).useContents {
+                    error_msg?.use { throw NullPointerException(it.toKString()) }
+                    value
+                }
         }
     }
 
-    actual val size: Int by lazy {
+    actual val size: Int =
         encoding_get_len(inner.asCPointer()).useContents {
             error_msg?.use { throw NullPointerException(it.toKString()) }
             value.toInt()
         }
-    }
 
     actual override fun equals(other: Any?): Boolean =
         other is Encoding && encoding_eq(inner.asCPointer(), other.inner.asCPointer()).useContents {
