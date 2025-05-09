@@ -127,6 +127,10 @@ android {
         minSdk = 27
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+
+    sourceSets.named("main") {
+        jniLibs.srcDir("src/androidMain/jniLibs")
+    }
 }
 
 tasks.dokkaJavadoc {

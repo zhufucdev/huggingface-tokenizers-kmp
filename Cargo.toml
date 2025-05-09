@@ -16,6 +16,7 @@ tokenizers = { version = "0.21.1", default-features = false, features = ["http",
 [workspace]
 resolver = "2"
 members = ["apigen"]
+exclude = ["tokenizers/tokenizers"]
 
 [patch.crates-io]
 tokenizers = { path = "./tokenizers/tokenizers" }

@@ -26,6 +26,9 @@ abstract class CargoCompile : DefaultTask() {
     @get:Incremental
     protected abstract val sourceDirProperty: Property<File>
 
+    @get:InputFile
+    protected val cargoFile = project.file("Cargo.toml")
+
     @get:Internal
     var konanTarget: KonanTarget
         get() = konanTargetProperty.get()
