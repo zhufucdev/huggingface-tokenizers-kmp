@@ -1,6 +1,6 @@
 pub mod bridge {
     use std::path::Path;
-    use tokenizers::{truncate_encodings, Encoding, Tokenizer};
+    use tokenizers::{Encoding, Tokenizer};
 
     pub fn new_tokenizer_from_pretrained<F: AsRef<str>>(
         identifier: F,
