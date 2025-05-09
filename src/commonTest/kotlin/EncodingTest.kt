@@ -23,10 +23,16 @@ class EncodingTest {
 
     @Test
     fun encode_many() {
-        val encodings = tokenizer.encode(listOf("Salut!", "Hey there!", "¡hola!"))
+        val encodings = tokenizer.encode(listOf("Salut!", "Hey there!", "¡hola!"), addSpecialTokens = true)
         assertEquals(3, encodings.size)
+        val expectedIds = listOf(
+            listOf(101u, 18613u, 3818u, 106u, 102u),
+            listOf(101u, 4403u, 1175u, 106u, 102u),
+            listOf(101u, 200u, 16358u, 1742u, 106u, 102u)
+        )
         encodings.forEachIndexed { index, encoding ->
             assertTrue("Empty result at index $index") { encoding.size > 0 }
+            assertContentEquals(expectedIds[index], encoding.ids)
         }
     }
 
