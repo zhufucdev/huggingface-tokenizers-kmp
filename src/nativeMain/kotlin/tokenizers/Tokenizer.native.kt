@@ -17,10 +17,10 @@ actual class Tokenizer private constructor(private val inner: StableRef<CPointed
         error(ERROR_EMPTY_RESULT)
     }
 
-    actual fun encode(inputs: List<String>, addSpecialTokens: Boolean): List<Encoding> =
+    actual fun encode(inputs: List<String>, withSpecialTokens: Boolean): List<Encoding> =
         memScoped {
             val inputsHeap = inputs.toCStringArray(this)
-            tokenizer_encode_batch(inner.asCPointer(), inputsHeap, inputs.size, addSpecialTokens).useContents {
+            tokenizer_encode_batch(inner.asCPointer(), inputsHeap, inputs.size, withSpecialTokens).useContents {
                 readListResult<CPointerVarOf<CPointer<*>>, Encoding> {
                     Encoding.fromC(
                         it.value ?: throw NullPointerException()

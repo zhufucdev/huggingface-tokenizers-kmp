@@ -23,7 +23,7 @@ class EncodingTest {
 
     @Test
     fun encode_many() {
-        val encodings = tokenizer.encode(listOf("Salut!", "Hey there!", "¡hola!"), addSpecialTokens = true)
+        val encodings = tokenizer.encode(listOf("Salut!", "Hey there!", "¡hola!"), withSpecialTokens = true)
         assertEquals(3, encodings.size)
         val expectedIds = listOf(
             listOf(101u, 18613u, 3818u, 106u, 102u),

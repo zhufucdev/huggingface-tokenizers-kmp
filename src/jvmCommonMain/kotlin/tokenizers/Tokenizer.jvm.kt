@@ -10,9 +10,9 @@ actual class Tokenizer private constructor(private val ptr: Long) {
         return Encoding.fromPtr(encodingPtr)
     }
 
-    actual fun encode(inputs: List<String>, addSpecialTokens: Boolean): List<Encoding> =
+    actual fun encode(inputs: List<String>, withSpecialTokens: Boolean): List<Encoding> =
         try {
-            NativeBridge.tokenizerEncodeBatch(ptr, inputs.toTypedArray(), addSpecialTokens)
+            NativeBridge.tokenizerEncodeBatch(ptr, inputs.toTypedArray(), withSpecialTokens)
                 .map(Encoding::fromPtr)
         } catch (e: RuntimeException) {
             error(e.message!!)
